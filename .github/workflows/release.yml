@@ -1,0 +1,46 @@
+name: Release
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build and Release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.25'
+          cache: true
+
+      - name: Build binaries
+        env:
+          VERSION: ${{ github.event.release.tag_name }}
+        run: |
+          LDFLAGS="-s -w -X github.com/Tech-Arch1tect/berth-cli/cmd.Version=${VERSION}"
+
+          CGO_ENABLED=0 GOOS=linux   GOARCH=amd64 go build -ldflags "${LDFLAGS}" -o berth-cli-linux-amd64 .
+          CGO_ENABLED=0 GOOS=linux   GOARCH=arm64 go build -ldflags "${LDFLAGS}" -o berth-cli-linux-arm64 .
+          CGO_ENABLED=0 GOOS=darwin  GOARCH=amd64 go build -ldflags "${LDFLAGS}" -o berth-cli-darwin-amd64 .
+          CGO_ENABLED=0 GOOS=darwin  GOARCH=arm64 go build -ldflags "${LDFLAGS}" -o berth-cli-darwin-arm64 .
+          CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -ldflags "${LDFLAGS}" -o berth-cli-windows-amd64.exe .
+
+      - name: Upload binaries to release
+        uses: softprops/action-gh-release@v2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          tag_name: ${{ github.event.release.tag_name }}
+          files: |
+            berth-cli-linux-amd64
+            berth-cli-linux-arm64
+            berth-cli-darwin-amd64
+            berth-cli-darwin-arm64
+            berth-cli-windows-amd64.exe
