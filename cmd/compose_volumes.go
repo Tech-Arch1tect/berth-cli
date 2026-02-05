@@ -8,7 +8,7 @@ import (
 )
 
 var composeAddVolumeCmd = &cobra.Command{
-	Use:   "add-volume <server-id> <stack-name> <service> <volume-mount>",
+	Use:   "add-volume <service> <volume-mount>",
 	Short: "Add a volume mount to a service",
 	Long: `Add a volume mount to a service in a Docker Compose stack.
 
@@ -19,32 +19,32 @@ Volume format: source:target[:ro]
 
 Examples:
   # Add bind mount
-  berth-cli compose add-volume 1 my-stack nginx ./html:/usr/share/nginx/html
+  berth-cli compose add-volume -s 1 -n my-stack nginx ./html:/usr/share/nginx/html
 
   # Add named volume
-  berth-cli compose add-volume 1 my-stack db data:/var/lib/mysql
+  berth-cli compose add-volume -s 1 -n my-stack db data:/var/lib/mysql
 
   # Add read-only mount
-  berth-cli compose add-volume 1 my-stack app ./config:/app/config:ro
+  berth-cli compose add-volume -s 1 -n my-stack app ./config:/app/config:ro
 
   # Skip confirmation
-  berth-cli compose add-volume 1 my-stack nginx ./logs:/var/log/nginx --yes`,
-	Args: cobra.ExactArgs(4),
+  berth-cli compose add-volume -s 1 -n my-stack nginx ./logs:/var/log/nginx --yes`,
+	Args: cobra.ExactArgs(2),
 	RunE: runComposeAddVolume,
 }
 
 var composeRemoveVolumeCmd = &cobra.Command{
-	Use:   "remove-volume <server-id> <stack-name> <service> <target-path>",
+	Use:   "remove-volume <service> <target-path>",
 	Short: "Remove a volume mount from a service",
 	Long: `Remove a volume mount from a service by its container target path.
 
 Examples:
   # Remove volume by target path
-  berth-cli compose remove-volume 1 my-stack nginx /usr/share/nginx/html
+  berth-cli compose remove-volume -s 1 -n my-stack nginx /usr/share/nginx/html
 
   # Skip confirmation
-  berth-cli compose remove-volume 1 my-stack nginx /var/log/nginx --yes`,
-	Args: cobra.ExactArgs(4),
+  berth-cli compose remove-volume -s 1 -n my-stack nginx /var/log/nginx --yes`,
+	Args: cobra.ExactArgs(2),
 	RunE: runComposeRemoveVolume,
 }
 
@@ -157,14 +157,14 @@ func runComposeAddVolume(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	var serverID int32
-	if _, err := fmt.Sscanf(args[0], "%d", &serverID); err != nil {
-		return fmt.Errorf("invalid server ID: %s", args[0])
+	serverID, err := getServerID(cmd)
+	if err != nil {
+		return err
 	}
 
-	stackName := args[1]
-	serviceName := args[2]
-	volumeStr := args[3]
+	stackName := getStackName(cmd)
+	serviceName := args[0]
+	volumeStr := args[1]
 	skipConfirm, _ := cmd.Flags().GetBool("yes")
 
 	newVolume, err := parseVolumeMount(volumeStr)
@@ -210,14 +210,14 @@ func runComposeRemoveVolume(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	var serverID int32
-	if _, err := fmt.Sscanf(args[0], "%d", &serverID); err != nil {
-		return fmt.Errorf("invalid server ID: %s", args[0])
+	serverID, err := getServerID(cmd)
+	if err != nil {
+		return err
 	}
 
-	stackName := args[1]
-	serviceName := args[2]
-	targetPath := args[3]
+	stackName := getStackName(cmd)
+	serviceName := args[0]
+	targetPath := args[1]
 	skipConfirm, _ := cmd.Flags().GetBool("yes")
 
 	resp, _, err := c.API.ComposeAPI.ApiV1ServersServeridStacksStacknameComposeGet(c.Ctx, serverID, stackName).Execute()

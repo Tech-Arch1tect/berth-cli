@@ -7,7 +7,7 @@ import (
 )
 
 var composeSetCommandCmd = &cobra.Command{
-	Use:   "set-command <server-id> <stack-name> <service> -- <command...>",
+	Use:   "set-command <service> -- <command...>",
 	Short: "Set the command for a service",
 	Long: `Set the command for a service in a Docker Compose stack.
 
@@ -15,19 +15,19 @@ Use -- to separate the command arguments. All flags must come BEFORE --.
 
 Examples:
   # Set command
-  berth-cli compose set-command 1 my-stack app -- npm run start
+  berth-cli compose set-command -s 1 -n my-stack app -- npm run start
 
   # Set command with multiple arguments
-  berth-cli compose set-command 1 my-stack app -- /bin/sh -c "echo hello"
+  berth-cli compose set-command -s 1 -n my-stack app -- /bin/sh -c "echo hello"
 
   # Skip confirmation (flags before --)
-  berth-cli compose set-command --yes 1 my-stack app -- python app.py`,
-	Args: cobra.MinimumNArgs(3),
+  berth-cli compose set-command --yes -s 1 -n my-stack app -- python app.py`,
+	Args: cobra.MinimumNArgs(1),
 	RunE: runComposeSetCommand,
 }
 
 var composeSetEntrypointCmd = &cobra.Command{
-	Use:   "set-entrypoint <server-id> <stack-name> <service> -- <entrypoint...>",
+	Use:   "set-entrypoint <service> -- <entrypoint...>",
 	Short: "Set the entrypoint for a service",
 	Long: `Set the entrypoint for a service in a Docker Compose stack.
 
@@ -35,14 +35,14 @@ Use -- to separate the entrypoint arguments. All flags must come BEFORE --.
 
 Examples:
   # Set entrypoint
-  berth-cli compose set-entrypoint 1 my-stack app -- /docker-entrypoint.sh
+  berth-cli compose set-entrypoint -s 1 -n my-stack app -- /docker-entrypoint.sh
 
   # Set entrypoint with arguments
-  berth-cli compose set-entrypoint 1 my-stack app -- /bin/sh -c
+  berth-cli compose set-entrypoint -s 1 -n my-stack app -- /bin/sh -c
 
   # Skip confirmation (flags before --)
-  berth-cli compose set-entrypoint --yes 1 my-stack app -- /entrypoint.sh`,
-	Args: cobra.MinimumNArgs(3),
+  berth-cli compose set-entrypoint --yes -s 1 -n my-stack app -- /entrypoint.sh`,
+	Args: cobra.MinimumNArgs(1),
 	RunE: runComposeSetEntrypoint,
 }
 
@@ -59,18 +59,18 @@ func runComposeSetCommand(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	var serverID int32
-	if _, err := fmt.Sscanf(args[0], "%d", &serverID); err != nil {
-		return fmt.Errorf("invalid server ID: %s", args[0])
+	serverID, err := getServerID(cmd)
+	if err != nil {
+		return err
 	}
 
-	stackName := args[1]
-	serviceName := args[2]
+	stackName := getStackName(cmd)
+	serviceName := args[0]
 	skipConfirm, _ := cmd.Flags().GetBool("yes")
 
 	var command []string
-	if len(args) > 3 {
-		command = args[3:]
+	if len(args) > 1 {
+		command = args[1:]
 	}
 
 	if len(command) == 0 {
@@ -99,18 +99,18 @@ func runComposeSetEntrypoint(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	var serverID int32
-	if _, err := fmt.Sscanf(args[0], "%d", &serverID); err != nil {
-		return fmt.Errorf("invalid server ID: %s", args[0])
+	serverID, err := getServerID(cmd)
+	if err != nil {
+		return err
 	}
 
-	stackName := args[1]
-	serviceName := args[2]
+	stackName := getStackName(cmd)
+	serviceName := args[0]
 	skipConfirm, _ := cmd.Flags().GetBool("yes")
 
 	var entrypoint []string
-	if len(args) > 3 {
-		entrypoint = args[3:]
+	if len(args) > 1 {
+		entrypoint = args[1:]
 	}
 
 	if len(entrypoint) == 0 {

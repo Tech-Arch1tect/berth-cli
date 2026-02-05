@@ -11,7 +11,7 @@ import (
 var validRestartPolicies = []string{"no", "always", "on-failure", "unless-stopped"}
 
 var composeSetRestartCmd = &cobra.Command{
-	Use:   "set-restart <server-id> <stack-name> <service> <policy>",
+	Use:   "set-restart <service> <policy>",
 	Short: "Set the restart policy for a service",
 	Long: `Set the restart policy for a service in a Docker Compose stack.
 
@@ -19,11 +19,11 @@ Valid policies: no, always, on-failure, unless-stopped
 
 Examples:
   # Set restart policy to always
-  berth-cli compose set-restart 1 my-stack nginx always
+  berth-cli compose set-restart -s 1 -n my-stack nginx always
 
   # Set restart policy to on-failure
-  berth-cli compose set-restart 1 my-stack nginx on-failure --yes`,
-	Args: cobra.ExactArgs(4),
+  berth-cli compose set-restart -s 1 -n my-stack nginx on-failure --yes`,
+	Args: cobra.ExactArgs(2),
 	RunE: runComposeSetRestart,
 }
 
@@ -38,14 +38,14 @@ func runComposeSetRestart(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	var serverID int32
-	if _, err := fmt.Sscanf(args[0], "%d", &serverID); err != nil {
-		return fmt.Errorf("invalid server ID: %s", args[0])
+	serverID, err := getServerID(cmd)
+	if err != nil {
+		return err
 	}
 
-	stackName := args[1]
-	serviceName := args[2]
-	policy := args[3]
+	stackName := getStackName(cmd)
+	serviceName := args[0]
+	policy := args[1]
 	skipConfirm, _ := cmd.Flags().GetBool("yes")
 
 	if !slices.Contains(validRestartPolicies, policy) {

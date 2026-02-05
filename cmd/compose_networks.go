@@ -7,7 +7,7 @@ import (
 )
 
 var composeAddNetworkCmd = &cobra.Command{
-	Use:   "add-network <server-id> <stack-name> <service> <network-name>",
+	Use:   "add-network <service> <network-name>",
 	Short: "Add a service to a network",
 	Long: `Add a service to a network in a Docker Compose stack.
 
@@ -15,26 +15,26 @@ The network must already exist at the stack level.
 
 Examples:
   # Add service to a network
-  berth-cli compose add-network 1 my-stack nginx frontend
+  berth-cli compose add-network -s 1 -n my-stack nginx frontend
 
   # Skip confirmation
-  berth-cli compose add-network 1 my-stack nginx backend --yes`,
-	Args: cobra.ExactArgs(4),
+  berth-cli compose add-network -s 1 -n my-stack nginx backend --yes`,
+	Args: cobra.ExactArgs(2),
 	RunE: runComposeAddNetwork,
 }
 
 var composeRemoveNetworkCmd = &cobra.Command{
-	Use:   "remove-network <server-id> <stack-name> <service> <network-name>",
+	Use:   "remove-network <service> <network-name>",
 	Short: "Remove a service from a network",
 	Long: `Remove a service from a network in a Docker Compose stack.
 
 Examples:
   # Remove service from a network
-  berth-cli compose remove-network 1 my-stack nginx frontend
+  berth-cli compose remove-network -s 1 -n my-stack nginx frontend
 
   # Skip confirmation
-  berth-cli compose remove-network 1 my-stack nginx frontend --yes`,
-	Args: cobra.ExactArgs(4),
+  berth-cli compose remove-network -s 1 -n my-stack nginx frontend --yes`,
+	Args: cobra.ExactArgs(2),
 	RunE: runComposeRemoveNetwork,
 }
 
@@ -79,14 +79,14 @@ func runComposeAddNetwork(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	var serverID int32
-	if _, err := fmt.Sscanf(args[0], "%d", &serverID); err != nil {
-		return fmt.Errorf("invalid server ID: %s", args[0])
+	serverID, err := getServerID(cmd)
+	if err != nil {
+		return err
 	}
 
-	stackName := args[1]
-	serviceName := args[2]
-	networkName := args[3]
+	stackName := getStackName(cmd)
+	serviceName := args[0]
+	networkName := args[1]
 	skipConfirm, _ := cmd.Flags().GetBool("yes")
 
 	resp, _, err := c.API.ComposeAPI.ApiV1ServersServeridStacksStacknameComposeGet(c.Ctx, serverID, stackName).Execute()
@@ -130,14 +130,14 @@ func runComposeRemoveNetwork(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	var serverID int32
-	if _, err := fmt.Sscanf(args[0], "%d", &serverID); err != nil {
-		return fmt.Errorf("invalid server ID: %s", args[0])
+	serverID, err := getServerID(cmd)
+	if err != nil {
+		return err
 	}
 
-	stackName := args[1]
-	serviceName := args[2]
-	networkName := args[3]
+	stackName := getStackName(cmd)
+	serviceName := args[0]
+	networkName := args[1]
 	skipConfirm, _ := cmd.Flags().GetBool("yes")
 
 	resp, _, err := c.API.ComposeAPI.ApiV1ServersServeridStacksStacknameComposeGet(c.Ctx, serverID, stackName).Execute()

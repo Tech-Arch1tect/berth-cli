@@ -22,10 +22,9 @@ var listServersCmd = &cobra.Command{
 }
 
 var listStacksCmd = &cobra.Command{
-	Use:   "stacks <server-id>",
+	Use:   "stacks",
 	Short: "List stacks on a server",
 	Long:  `List all stacks on a specific server.`,
-	Args:  cobra.ExactArgs(1),
 	RunE:  runListStacks,
 }
 
@@ -33,6 +32,7 @@ func init() {
 	rootCmd.AddCommand(listCmd)
 	listCmd.AddCommand(listServersCmd)
 	listCmd.AddCommand(listStacksCmd)
+	listCmd.PersistentFlags().StringP("server-id", "s", "", "Server ID (required for stacks)")
 }
 
 func runListServers(cmd *cobra.Command, args []string) error {
@@ -95,11 +95,9 @@ func runListStacks(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	serverID := args[0]
-
-	var serverIDInt int32
-	if _, err := fmt.Sscanf(serverID, "%d", &serverIDInt); err != nil {
-		return fmt.Errorf("invalid server ID: %s", serverID)
+	serverIDInt, err := getServerID(cmd)
+	if err != nil {
+		return err
 	}
 
 	resp, _, err := c.API.StacksAPI.ApiV1ServersServeridStacksGet(c.Ctx, serverIDInt).Execute()
@@ -110,7 +108,7 @@ func runListStacks(cmd *cobra.Command, args []string) error {
 	data := resp.GetData()
 	stacks := data.GetStacks()
 	if len(stacks) == 0 {
-		fmt.Printf("No stacks found on server %s.\n", serverID)
+		fmt.Printf("No stacks found on server %s.\n", getServerIDStr(cmd))
 		return nil
 	}
 

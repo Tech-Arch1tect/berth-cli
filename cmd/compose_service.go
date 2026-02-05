@@ -7,7 +7,7 @@ import (
 )
 
 var composeAddServiceCmd = &cobra.Command{
-	Use:   "add-service <server-id> <stack-name> <service-name> <image>",
+	Use:   "add-service <service-name> <image>",
 	Short: "Add a new service to a stack",
 	Long: `Add a new service to a Docker Compose stack.
 
@@ -16,19 +16,19 @@ to add ports, volumes, environment variables, etc. after creation.
 
 Examples:
   # Add a basic service
-  berth-cli compose add-service 1 my-stack redis redis:7-alpine
+  berth-cli compose add-service -s 1 -n my-stack redis redis:7-alpine
 
   # Add service with restart policy
-  berth-cli compose add-service 1 my-stack nginx nginx:alpine --restart always
+  berth-cli compose add-service -s 1 -n my-stack nginx nginx:alpine --restart always
 
   # Skip confirmation
-  berth-cli compose add-service 1 my-stack api myapp:latest --yes`,
-	Args: cobra.ExactArgs(4),
+  berth-cli compose add-service -s 1 -n my-stack api myapp:latest --yes`,
+	Args: cobra.ExactArgs(2),
 	RunE: runComposeAddService,
 }
 
 var composeRemoveServiceCmd = &cobra.Command{
-	Use:   "remove-service <server-id> <stack-name> <service-name>",
+	Use:   "remove-service <service-name>",
 	Short: "Remove a service from a stack",
 	Long: `Remove a service from a Docker Compose stack.
 
@@ -36,16 +36,16 @@ This permanently removes the service definition from the compose file.
 
 Examples:
   # Remove a service
-  berth-cli compose remove-service 1 my-stack old-service
+  berth-cli compose remove-service -s 1 -n my-stack old-service
 
   # Skip confirmation
-  berth-cli compose remove-service 1 my-stack old-service --yes`,
-	Args: cobra.ExactArgs(3),
+  berth-cli compose remove-service -s 1 -n my-stack old-service --yes`,
+	Args: cobra.ExactArgs(1),
 	RunE: runComposeRemoveService,
 }
 
 var composeRenameServiceCmd = &cobra.Command{
-	Use:   "rename-service <server-id> <stack-name> <old-name> <new-name>",
+	Use:   "rename-service <old-name> <new-name>",
 	Short: "Rename a service in a stack",
 	Long: `Rename a service in a Docker Compose stack.
 
@@ -53,11 +53,11 @@ This updates the service name while preserving all configuration.
 
 Examples:
   # Rename a service
-  berth-cli compose rename-service 1 my-stack old-name new-name
+  berth-cli compose rename-service -s 1 -n my-stack old-name new-name
 
   # Skip confirmation
-  berth-cli compose rename-service 1 my-stack web frontend --yes`,
-	Args: cobra.ExactArgs(4),
+  berth-cli compose rename-service -s 1 -n my-stack web frontend --yes`,
+	Args: cobra.ExactArgs(2),
 	RunE: runComposeRenameService,
 }
 
@@ -84,14 +84,14 @@ func runComposeAddService(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	var serverID int32
-	if _, err := fmt.Sscanf(args[0], "%d", &serverID); err != nil {
-		return fmt.Errorf("invalid server ID: %s", args[0])
+	serverID, err := getServerID(cmd)
+	if err != nil {
+		return err
 	}
 
-	stackName := args[1]
-	serviceName := args[2]
-	image := args[3]
+	stackName := getStackName(cmd)
+	serviceName := args[0]
+	image := args[1]
 	skipConfirm, _ := cmd.Flags().GetBool("yes")
 	restart, _ := cmd.Flags().GetString("restart")
 
@@ -129,13 +129,13 @@ func runComposeRemoveService(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	var serverID int32
-	if _, err := fmt.Sscanf(args[0], "%d", &serverID); err != nil {
-		return fmt.Errorf("invalid server ID: %s", args[0])
+	serverID, err := getServerID(cmd)
+	if err != nil {
+		return err
 	}
 
-	stackName := args[1]
-	serviceName := args[2]
+	stackName := getStackName(cmd)
+	serviceName := args[0]
 	skipConfirm, _ := cmd.Flags().GetBool("yes")
 
 	resp, _, err := c.API.ComposeAPI.ApiV1ServersServeridStacksStacknameComposeGet(c.Ctx, serverID, stackName).Execute()
@@ -168,14 +168,14 @@ func runComposeRenameService(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	var serverID int32
-	if _, err := fmt.Sscanf(args[0], "%d", &serverID); err != nil {
-		return fmt.Errorf("invalid server ID: %s", args[0])
+	serverID, err := getServerID(cmd)
+	if err != nil {
+		return err
 	}
 
-	stackName := args[1]
-	oldName := args[2]
-	newName := args[3]
+	stackName := getStackName(cmd)
+	oldName := args[0]
+	newName := args[1]
 	skipConfirm, _ := cmd.Flags().GetBool("yes")
 
 	if oldName == newName {

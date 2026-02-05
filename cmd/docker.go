@@ -17,8 +17,6 @@ import (
 )
 
 var (
-	dockerServerID string
-	dockerStack    string
 	dockerServices []string
 	dockerOptions  []string
 	dockerFollow   bool
@@ -50,14 +48,11 @@ Examples:
 func init() {
 	rootCmd.AddCommand(dockerCmd)
 
-	dockerCmd.PersistentFlags().StringVarP(&dockerServerID, "server-id", "s", "", "Server ID (required)")
-	dockerCmd.PersistentFlags().StringVarP(&dockerStack, "stack", "n", "", "Stack name (required)")
+	addServerIDFlag(dockerCmd, true)
+	addStackFlag(dockerCmd, true)
 	dockerCmd.PersistentFlags().StringSliceVar(&dockerServices, "services", []string{}, "Specific services to target (comma-separated)")
 	dockerCmd.PersistentFlags().StringSliceVar(&dockerOptions, "options", []string{}, "Additional options to pass to docker compose")
 	dockerCmd.PersistentFlags().BoolVarP(&dockerFollow, "follow", "f", true, "Follow operation logs (default: true)")
-
-	dockerCmd.MarkPersistentFlagRequired("server-id")
-	dockerCmd.MarkPersistentFlagRequired("stack")
 
 	dockerCmd.AddCommand(
 		&cobra.Command{
@@ -194,7 +189,10 @@ func runDockerOperation(command string) func(*cobra.Command, []string) error {
 			return err
 		}
 
-		operationID, err := startOperation(cfg, dockerServerID, dockerStack, operationRequest{
+		serverID := getServerIDStr(cmd)
+		stackName := getStackName(cmd)
+
+		operationID, err := startOperation(cfg, serverID, stackName, operationRequest{
 			Command:  command,
 			Options:  dockerOptions,
 			Services: dockerServices,
@@ -209,7 +207,7 @@ func runDockerOperation(command string) func(*cobra.Command, []string) error {
 			return nil
 		}
 
-		return streamOperation(cfg, dockerServerID, dockerStack, operationID)
+		return streamOperation(cfg, serverID, stackName, operationID)
 	}
 }
 

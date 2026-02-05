@@ -9,32 +9,32 @@ import (
 )
 
 var composeSetEnvCmd = &cobra.Command{
-	Use:   "set-env <server-id> <stack-name> <service> <KEY=value>",
+	Use:   "set-env <service> <KEY=value>",
 	Short: "Set an environment variable for a service",
 	Long: `Set or update an environment variable for a service in a Docker Compose stack.
 
 Examples:
   # Set an environment variable
-  berth-cli compose set-env 1 my-stack nginx DATABASE_URL=postgres://localhost/db
+  berth-cli compose set-env -s 1 -n my-stack nginx DATABASE_URL=postgres://localhost/db
 
   # Set with confirmation skip
-  berth-cli compose set-env 1 my-stack nginx API_KEY=secret --yes`,
-	Args: cobra.ExactArgs(4),
+  berth-cli compose set-env -s 1 -n my-stack nginx API_KEY=secret --yes`,
+	Args: cobra.ExactArgs(2),
 	RunE: runComposeSetEnv,
 }
 
 var composeUnsetEnvCmd = &cobra.Command{
-	Use:   "unset-env <server-id> <stack-name> <service> <KEY>",
+	Use:   "unset-env <service> <KEY>",
 	Short: "Remove an environment variable from a service",
 	Long: `Remove an environment variable from a service in a Docker Compose stack.
 
 Examples:
   # Remove an environment variable
-  berth-cli compose unset-env 1 my-stack nginx DEBUG
+  berth-cli compose unset-env -s 1 -n my-stack nginx DEBUG
 
   # Remove with confirmation skip
-  berth-cli compose unset-env 1 my-stack nginx DEBUG --yes`,
-	Args: cobra.ExactArgs(4),
+  berth-cli compose unset-env -s 1 -n my-stack nginx DEBUG --yes`,
+	Args: cobra.ExactArgs(2),
 	RunE: runComposeUnsetEnv,
 }
 
@@ -51,14 +51,14 @@ func runComposeSetEnv(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	var serverID int32
-	if _, err := fmt.Sscanf(args[0], "%d", &serverID); err != nil {
-		return fmt.Errorf("invalid server ID: %s", args[0])
+	serverID, err := getServerID(cmd)
+	if err != nil {
+		return err
 	}
 
-	stackName := args[1]
-	serviceName := args[2]
-	keyValue := args[3]
+	stackName := getStackName(cmd)
+	serviceName := args[0]
+	keyValue := args[1]
 	skipConfirm, _ := cmd.Flags().GetBool("yes")
 
 	parts := strings.SplitN(keyValue, "=", 2)
@@ -95,14 +95,14 @@ func runComposeUnsetEnv(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	var serverID int32
-	if _, err := fmt.Sscanf(args[0], "%d", &serverID); err != nil {
-		return fmt.Errorf("invalid server ID: %s", args[0])
+	serverID, err := getServerID(cmd)
+	if err != nil {
+		return err
 	}
 
-	stackName := args[1]
-	serviceName := args[2]
-	key := args[3]
+	stackName := getStackName(cmd)
+	serviceName := args[0]
+	key := args[1]
 	skipConfirm, _ := cmd.Flags().GetBool("yes")
 
 	if key == "" {

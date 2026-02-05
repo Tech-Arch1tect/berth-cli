@@ -12,4 +12,7 @@ var composeCmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(composeCmd)
+
+	addServerIDFlag(composeCmd, true)
+	addStackFlag(composeCmd, true)
 }

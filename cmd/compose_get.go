@@ -14,25 +14,25 @@ var (
 )
 
 var composeGetCmd = &cobra.Command{
-	Use:   "get <server-id> <stack-name> [service]",
+	Use:   "get [service]",
 	Short: "Get compose configuration",
 	Long: `Retrieve and display the compose configuration for a stack.
 
 Examples:
   # Get full stack config as YAML
-  berth-cli compose get 1 my-stack
+  berth-cli compose get -s 1 -n my-stack
 
   # Get specific service config
-  berth-cli compose get 1 my-stack nginx
+  berth-cli compose get -s 1 -n my-stack nginx
 
   # Output as JSON
-  berth-cli compose get 1 my-stack --output json
+  berth-cli compose get -s 1 -n my-stack --output json
 
   # Get specific field from a service
-  berth-cli compose get 1 my-stack nginx --field image
-  berth-cli compose get 1 my-stack nginx --field environment
-  berth-cli compose get 1 my-stack nginx --field ports`,
-	Args: cobra.RangeArgs(2, 3),
+  berth-cli compose get -s 1 -n my-stack nginx --field image
+  berth-cli compose get -s 1 -n my-stack nginx --field environment
+  berth-cli compose get -s 1 -n my-stack nginx --field ports`,
+	Args: cobra.RangeArgs(0, 1),
 	RunE: runComposeGet,
 }
 
@@ -48,15 +48,15 @@ func runComposeGet(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	var serverID int32
-	if _, err := fmt.Sscanf(args[0], "%d", &serverID); err != nil {
-		return fmt.Errorf("invalid server ID: %s", args[0])
+	serverID, err := getServerID(cmd)
+	if err != nil {
+		return err
 	}
 
-	stackName := args[1]
+	stackName := getStackName(cmd)
 	var serviceName string
-	if len(args) > 2 {
-		serviceName = args[2]
+	if len(args) > 0 {
+		serviceName = args[0]
 	}
 
 	resp, _, err := c.API.ComposeAPI.ApiV1ServersServeridStacksStacknameComposeGet(c.Ctx, serverID, stackName).Execute()

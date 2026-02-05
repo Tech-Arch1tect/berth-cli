@@ -8,17 +8,17 @@ import (
 )
 
 var composeSetImageCmd = &cobra.Command{
-	Use:   "set-image <server-id> <stack-name> <service> <image>",
+	Use:   "set-image <service> <image>",
 	Short: "Set the image for a service",
 	Long: `Update the container image for a service in a Docker Compose stack.
 
 Examples:
   # Set image with preview and confirmation
-  berth-cli compose set-image 1 my-stack nginx nginx:1.25
+  berth-cli compose set-image -s 1 -n my-stack nginx nginx:1.25
 
   # Skip confirmation and apply directly
-  berth-cli compose set-image 1 my-stack nginx nginx:1.25 --yes`,
-	Args: cobra.ExactArgs(4),
+  berth-cli compose set-image -s 1 -n my-stack nginx nginx:1.25 --yes`,
+	Args: cobra.ExactArgs(2),
 	RunE: runComposeSetImage,
 }
 
@@ -33,14 +33,14 @@ func runComposeSetImage(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	var serverID int32
-	if _, err := fmt.Sscanf(args[0], "%d", &serverID); err != nil {
-		return fmt.Errorf("invalid server ID: %s", args[0])
+	serverID, err := getServerID(cmd)
+	if err != nil {
+		return err
 	}
 
-	stackName := args[1]
-	serviceName := args[2]
-	image := args[3]
+	stackName := getStackName(cmd)
+	serviceName := args[0]
+	image := args[1]
 	skipConfirm, _ := cmd.Flags().GetBool("yes")
 
 	serviceChanges := berth.NewServiceChanges()

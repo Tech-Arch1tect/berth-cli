@@ -9,7 +9,7 @@ import (
 )
 
 var composeAddPortCmd = &cobra.Command{
-	Use:   "add-port <server-id> <stack-name> <service> <port-mapping>",
+	Use:   "add-port <service> <port-mapping>",
 	Short: "Add a port mapping to a service",
 	Long: `Add a port mapping to a service in a Docker Compose stack.
 
@@ -17,22 +17,22 @@ Port format: [host_ip:]published:target[/protocol]
 
 Examples:
   # Add basic port mapping (host:container)
-  berth-cli compose add-port 1 my-stack nginx 8080:80
+  berth-cli compose add-port -s 1 -n my-stack nginx 8080:80
 
   # Add port with protocol
-  berth-cli compose add-port 1 my-stack nginx 443:443/tcp
+  berth-cli compose add-port -s 1 -n my-stack nginx 443:443/tcp
 
   # Add port with host IP binding
-  berth-cli compose add-port 1 my-stack nginx 127.0.0.1:8080:80
+  berth-cli compose add-port -s 1 -n my-stack nginx 127.0.0.1:8080:80
 
   # Skip confirmation
-  berth-cli compose add-port 1 my-stack nginx 8080:80 --yes`,
-	Args: cobra.ExactArgs(4),
+  berth-cli compose add-port -s 1 -n my-stack nginx 8080:80 --yes`,
+	Args: cobra.ExactArgs(2),
 	RunE: runComposeAddPort,
 }
 
 var composeRemovePortCmd = &cobra.Command{
-	Use:   "remove-port <server-id> <stack-name> <service> <port-mapping>",
+	Use:   "remove-port <service> <port-mapping>",
 	Short: "Remove a port mapping from a service",
 	Long: `Remove a port mapping from a service in a Docker Compose stack.
 
@@ -40,11 +40,11 @@ Port format: [host_ip:]published:target[/protocol]
 
 Examples:
   # Remove port mapping
-  berth-cli compose remove-port 1 my-stack nginx 8080:80
+  berth-cli compose remove-port -s 1 -n my-stack nginx 8080:80
 
   # Skip confirmation
-  berth-cli compose remove-port 1 my-stack nginx 8080:80 --yes`,
-	Args: cobra.ExactArgs(4),
+  berth-cli compose remove-port -s 1 -n my-stack nginx 8080:80 --yes`,
+	Args: cobra.ExactArgs(2),
 	RunE: runComposeRemovePort,
 }
 
@@ -182,14 +182,14 @@ func runComposeAddPort(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	var serverID int32
-	if _, err := fmt.Sscanf(args[0], "%d", &serverID); err != nil {
-		return fmt.Errorf("invalid server ID: %s", args[0])
+	serverID, err := getServerID(cmd)
+	if err != nil {
+		return err
 	}
 
-	stackName := args[1]
-	serviceName := args[2]
-	portStr := args[3]
+	stackName := getStackName(cmd)
+	serviceName := args[0]
+	portStr := args[1]
 	skipConfirm, _ := cmd.Flags().GetBool("yes")
 
 	newPort, err := parsePortMapping(portStr)
@@ -236,14 +236,14 @@ func runComposeRemovePort(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	var serverID int32
-	if _, err := fmt.Sscanf(args[0], "%d", &serverID); err != nil {
-		return fmt.Errorf("invalid server ID: %s", args[0])
+	serverID, err := getServerID(cmd)
+	if err != nil {
+		return err
 	}
 
-	stackName := args[1]
-	serviceName := args[2]
-	portStr := args[3]
+	stackName := getStackName(cmd)
+	serviceName := args[0]
+	portStr := args[1]
 	skipConfirm, _ := cmd.Flags().GetBool("yes")
 
 	targetPort, err := parsePortMapping(portStr)

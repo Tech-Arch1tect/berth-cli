@@ -9,32 +9,32 @@ import (
 )
 
 var composeSetLabelCmd = &cobra.Command{
-	Use:   "set-label <server-id> <stack-name> <service> <key=value>",
+	Use:   "set-label <service> <key=value>",
 	Short: "Set a label for a service",
 	Long: `Set or update a label for a service in a Docker Compose stack.
 
 Examples:
   # Set a label
-  berth-cli compose set-label 1 my-stack nginx app.version=1.2.3
+  berth-cli compose set-label -s 1 -n my-stack nginx app.version=1.2.3
 
   # Set deployment metadata
-  berth-cli compose set-label 1 my-stack nginx deploy.commit=abc123 --yes`,
-	Args: cobra.ExactArgs(4),
+  berth-cli compose set-label -s 1 -n my-stack nginx deploy.commit=abc123 --yes`,
+	Args: cobra.ExactArgs(2),
 	RunE: runComposeSetLabel,
 }
 
 var composeUnsetLabelCmd = &cobra.Command{
-	Use:   "unset-label <server-id> <stack-name> <service> <key>",
+	Use:   "unset-label <service> <key>",
 	Short: "Remove a label from a service",
 	Long: `Remove a label from a service in a Docker Compose stack.
 
 Examples:
   # Remove a label
-  berth-cli compose unset-label 1 my-stack nginx deprecated
+  berth-cli compose unset-label -s 1 -n my-stack nginx deprecated
 
   # Remove with confirmation skip
-  berth-cli compose unset-label 1 my-stack nginx old-label --yes`,
-	Args: cobra.ExactArgs(4),
+  berth-cli compose unset-label -s 1 -n my-stack nginx old-label --yes`,
+	Args: cobra.ExactArgs(2),
 	RunE: runComposeUnsetLabel,
 }
 
@@ -51,14 +51,14 @@ func runComposeSetLabel(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	var serverID int32
-	if _, err := fmt.Sscanf(args[0], "%d", &serverID); err != nil {
-		return fmt.Errorf("invalid server ID: %s", args[0])
+	serverID, err := getServerID(cmd)
+	if err != nil {
+		return err
 	}
 
-	stackName := args[1]
-	serviceName := args[2]
-	keyValue := args[3]
+	stackName := getStackName(cmd)
+	serviceName := args[0]
+	keyValue := args[1]
 	skipConfirm, _ := cmd.Flags().GetBool("yes")
 
 	parts := strings.SplitN(keyValue, "=", 2)
@@ -95,14 +95,14 @@ func runComposeUnsetLabel(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	var serverID int32
-	if _, err := fmt.Sscanf(args[0], "%d", &serverID); err != nil {
-		return fmt.Errorf("invalid server ID: %s", args[0])
+	serverID, err := getServerID(cmd)
+	if err != nil {
+		return err
 	}
 
-	stackName := args[1]
-	serviceName := args[2]
-	key := args[3]
+	stackName := getStackName(cmd)
+	serviceName := args[0]
+	key := args[1]
 	skipConfirm, _ := cmd.Flags().GetBool("yes")
 
 	if key == "" {

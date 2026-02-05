@@ -7,7 +7,7 @@ import (
 )
 
 var composeCreateSecretCmd = &cobra.Command{
-	Use:   "create-secret <server-id> <stack-name> <secret-name>",
+	Use:   "create-secret <secret-name>",
 	Short: "Create a secret in a stack",
 	Long: `Create a new secret definition in a Docker Compose stack.
 
@@ -15,32 +15,32 @@ Secrets can be sourced from a file or environment variable.
 
 Examples:
   # Create secret from file
-  berth-cli compose create-secret 1 my-stack db_password --file ./secrets/db_password.txt
+  berth-cli compose create-secret -s 1 -n my-stack db_password --file ./secrets/db_password.txt
 
   # Create secret from environment variable
-  berth-cli compose create-secret 1 my-stack db_password --environment DB_PASSWORD
+  berth-cli compose create-secret -s 1 -n my-stack db_password --environment DB_PASSWORD
 
   # Create an external secret reference
-  berth-cli compose create-secret 1 my-stack existing-secret --external
+  berth-cli compose create-secret -s 1 -n my-stack existing-secret --external
 
   # Skip confirmation
-  berth-cli compose create-secret 1 my-stack api_key --file ./secret.txt --yes`,
-	Args: cobra.ExactArgs(3),
+  berth-cli compose create-secret -s 1 -n my-stack api_key --file ./secret.txt --yes`,
+	Args: cobra.ExactArgs(1),
 	RunE: runComposeCreateSecret,
 }
 
 var composeDeleteSecretCmd = &cobra.Command{
-	Use:   "delete-secret <server-id> <stack-name> <secret-name>",
+	Use:   "delete-secret <secret-name>",
 	Short: "Delete a secret from a stack",
 	Long: `Delete a secret definition from a Docker Compose stack.
 
 Examples:
   # Delete a secret
-  berth-cli compose delete-secret 1 my-stack old-secret
+  berth-cli compose delete-secret -s 1 -n my-stack old-secret
 
   # Skip confirmation
-  berth-cli compose delete-secret 1 my-stack unused-secret --yes`,
-	Args: cobra.ExactArgs(3),
+  berth-cli compose delete-secret -s 1 -n my-stack unused-secret --yes`,
+	Args: cobra.ExactArgs(1),
 	RunE: runComposeDeleteSecret,
 }
 
@@ -67,13 +67,13 @@ func runComposeCreateSecret(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	var serverID int32
-	if _, err := fmt.Sscanf(args[0], "%d", &serverID); err != nil {
-		return fmt.Errorf("invalid server ID: %s", args[0])
+	serverID, err := getServerID(cmd)
+	if err != nil {
+		return err
 	}
 
-	stackName := args[1]
-	secretName := args[2]
+	stackName := getStackName(cmd)
+	secretName := args[0]
 	skipConfirm, _ := cmd.Flags().GetBool("yes")
 	file, _ := cmd.Flags().GetString("file")
 	environment, _ := cmd.Flags().GetString("environment")
@@ -121,13 +121,13 @@ func runComposeDeleteSecret(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	var serverID int32
-	if _, err := fmt.Sscanf(args[0], "%d", &serverID); err != nil {
-		return fmt.Errorf("invalid server ID: %s", args[0])
+	serverID, err := getServerID(cmd)
+	if err != nil {
+		return err
 	}
 
-	stackName := args[1]
-	secretName := args[2]
+	stackName := getStackName(cmd)
+	secretName := args[0]
 	skipConfirm, _ := cmd.Flags().GetBool("yes")
 
 	resp, _, err := c.API.ComposeAPI.ApiV1ServersServeridStacksStacknameComposeGet(c.Ctx, serverID, stackName).Execute()

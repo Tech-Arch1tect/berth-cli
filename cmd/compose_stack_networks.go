@@ -7,7 +7,7 @@ import (
 )
 
 var composeCreateNetworkCmd = &cobra.Command{
-	Use:   "create-network <server-id> <stack-name> <network-name>",
+	Use:   "create-network <network-name>",
 	Short: "Create a network in a stack",
 	Long: `Create a new network definition in a Docker Compose stack.
 
@@ -15,25 +15,25 @@ The network is created with default settings. Use flags to customize.
 
 Examples:
   # Create a basic network
-  berth-cli compose create-network 1 my-stack frontend
+  berth-cli compose create-network -s 1 -n my-stack frontend
 
   # Create with custom driver
-  berth-cli compose create-network 1 my-stack backend --driver overlay
+  berth-cli compose create-network -s 1 -n my-stack backend --driver overlay
 
   # Create with IPAM configuration
-  berth-cli compose create-network 1 my-stack internal --subnet 172.28.0.0/16 --gateway 172.28.0.1
+  berth-cli compose create-network -s 1 -n my-stack internal --subnet 172.28.0.0/16 --gateway 172.28.0.1
 
   # Create an external network reference
-  berth-cli compose create-network 1 my-stack shared-net --external
+  berth-cli compose create-network -s 1 -n my-stack shared-net --external
 
   # Skip confirmation
-  berth-cli compose create-network 1 my-stack internal --yes`,
-	Args: cobra.ExactArgs(3),
+  berth-cli compose create-network -s 1 -n my-stack internal --yes`,
+	Args: cobra.ExactArgs(1),
 	RunE: runComposeCreateNetwork,
 }
 
 var composeDeleteNetworkCmd = &cobra.Command{
-	Use:   "delete-network <server-id> <stack-name> <network-name>",
+	Use:   "delete-network <network-name>",
 	Short: "Delete a network from a stack",
 	Long: `Delete a network definition from a Docker Compose stack.
 
@@ -41,11 +41,11 @@ The network must not be in use by any services.
 
 Examples:
   # Delete a network
-  berth-cli compose delete-network 1 my-stack old-network
+  berth-cli compose delete-network -s 1 -n my-stack old-network
 
   # Skip confirmation
-  berth-cli compose delete-network 1 my-stack unused-net --yes`,
-	Args: cobra.ExactArgs(3),
+  berth-cli compose delete-network -s 1 -n my-stack unused-net --yes`,
+	Args: cobra.ExactArgs(1),
 	RunE: runComposeDeleteNetwork,
 }
 
@@ -87,13 +87,13 @@ func runComposeCreateNetwork(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	var serverID int32
-	if _, err := fmt.Sscanf(args[0], "%d", &serverID); err != nil {
-		return fmt.Errorf("invalid server ID: %s", args[0])
+	serverID, err := getServerID(cmd)
+	if err != nil {
+		return err
 	}
 
-	stackName := args[1]
-	networkName := args[2]
+	stackName := getStackName(cmd)
+	networkName := args[0]
 	skipConfirm, _ := cmd.Flags().GetBool("yes")
 	driver, _ := cmd.Flags().GetString("driver")
 	external, _ := cmd.Flags().GetBool("external")
@@ -158,13 +158,13 @@ func runComposeDeleteNetwork(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	var serverID int32
-	if _, err := fmt.Sscanf(args[0], "%d", &serverID); err != nil {
-		return fmt.Errorf("invalid server ID: %s", args[0])
+	serverID, err := getServerID(cmd)
+	if err != nil {
+		return err
 	}
 
-	stackName := args[1]
-	networkName := args[2]
+	stackName := getStackName(cmd)
+	networkName := args[0]
 	skipConfirm, _ := cmd.Flags().GetBool("yes")
 
 	if networkName == "default" {

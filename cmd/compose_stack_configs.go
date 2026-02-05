@@ -7,7 +7,7 @@ import (
 )
 
 var composeCreateConfigCmd = &cobra.Command{
-	Use:   "create-config <server-id> <stack-name> <config-name>",
+	Use:   "create-config <config-name>",
 	Short: "Create a config in a stack",
 	Long: `Create a new config definition in a Docker Compose stack.
 
@@ -15,32 +15,32 @@ Configs can be sourced from a file or environment variable.
 
 Examples:
   # Create config from file
-  berth-cli compose create-config 1 my-stack nginx_config --file ./configs/nginx.conf
+  berth-cli compose create-config -s 1 -n my-stack nginx_config --file ./configs/nginx.conf
 
   # Create config from environment variable
-  berth-cli compose create-config 1 my-stack app_config --environment APP_CONFIG
+  berth-cli compose create-config -s 1 -n my-stack app_config --environment APP_CONFIG
 
   # Create an external config reference
-  berth-cli compose create-config 1 my-stack existing-config --external
+  berth-cli compose create-config -s 1 -n my-stack existing-config --external
 
   # Skip confirmation
-  berth-cli compose create-config 1 my-stack settings --file ./config.json --yes`,
-	Args: cobra.ExactArgs(3),
+  berth-cli compose create-config -s 1 -n my-stack settings --file ./config.json --yes`,
+	Args: cobra.ExactArgs(1),
 	RunE: runComposeCreateConfig,
 }
 
 var composeDeleteConfigCmd = &cobra.Command{
-	Use:   "delete-config <server-id> <stack-name> <config-name>",
+	Use:   "delete-config <config-name>",
 	Short: "Delete a config from a stack",
 	Long: `Delete a config definition from a Docker Compose stack.
 
 Examples:
   # Delete a config
-  berth-cli compose delete-config 1 my-stack old-config
+  berth-cli compose delete-config -s 1 -n my-stack old-config
 
   # Skip confirmation
-  berth-cli compose delete-config 1 my-stack unused-config --yes`,
-	Args: cobra.ExactArgs(3),
+  berth-cli compose delete-config -s 1 -n my-stack unused-config --yes`,
+	Args: cobra.ExactArgs(1),
 	RunE: runComposeDeleteConfig,
 }
 
@@ -67,13 +67,13 @@ func runComposeCreateConfig(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	var serverID int32
-	if _, err := fmt.Sscanf(args[0], "%d", &serverID); err != nil {
-		return fmt.Errorf("invalid server ID: %s", args[0])
+	serverID, err := getServerID(cmd)
+	if err != nil {
+		return err
 	}
 
-	stackName := args[1]
-	configName := args[2]
+	stackName := getStackName(cmd)
+	configName := args[0]
 	skipConfirm, _ := cmd.Flags().GetBool("yes")
 	file, _ := cmd.Flags().GetString("file")
 	environment, _ := cmd.Flags().GetString("environment")
@@ -121,13 +121,13 @@ func runComposeDeleteConfig(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	var serverID int32
-	if _, err := fmt.Sscanf(args[0], "%d", &serverID); err != nil {
-		return fmt.Errorf("invalid server ID: %s", args[0])
+	serverID, err := getServerID(cmd)
+	if err != nil {
+		return err
 	}
 
-	stackName := args[1]
-	configName := args[2]
+	stackName := getStackName(cmd)
+	configName := args[0]
 	skipConfirm, _ := cmd.Flags().GetBool("yes")
 
 	resp, _, err := c.API.ComposeAPI.ApiV1ServersServeridStacksStacknameComposeGet(c.Ctx, serverID, stackName).Execute()

@@ -8,7 +8,7 @@ import (
 )
 
 var composeCreateVolumeCmd = &cobra.Command{
-	Use:   "create-volume <server-id> <stack-name> <volume-name>",
+	Use:   "create-volume <volume-name>",
 	Short: "Create a volume in a stack",
 	Long: `Create a new volume definition in a Docker Compose stack.
 
@@ -16,25 +16,25 @@ The volume is created with default settings. Use flags to customize.
 
 Examples:
   # Create a basic volume
-  berth-cli compose create-volume 1 my-stack data
+  berth-cli compose create-volume -s 1 -n my-stack data
 
   # Create with custom driver
-  berth-cli compose create-volume 1 my-stack logs --driver local
+  berth-cli compose create-volume -s 1 -n my-stack logs --driver local
 
   # Create with driver options
-  berth-cli compose create-volume 1 my-stack shared --driver-opt type=nfs --driver-opt o=addr=10.0.0.1
+  berth-cli compose create-volume -s 1 -n my-stack shared --driver-opt type=nfs --driver-opt o=addr=10.0.0.1
 
   # Create an external volume reference
-  berth-cli compose create-volume 1 my-stack existing-vol --external
+  berth-cli compose create-volume -s 1 -n my-stack existing-vol --external
 
   # Skip confirmation
-  berth-cli compose create-volume 1 my-stack cache --yes`,
-	Args: cobra.ExactArgs(3),
+  berth-cli compose create-volume -s 1 -n my-stack cache --yes`,
+	Args: cobra.ExactArgs(1),
 	RunE: runComposeCreateVolume,
 }
 
 var composeDeleteVolumeCmd = &cobra.Command{
-	Use:   "delete-volume <server-id> <stack-name> <volume-name>",
+	Use:   "delete-volume <volume-name>",
 	Short: "Delete a volume from a stack",
 	Long: `Delete a volume definition from a Docker Compose stack.
 
@@ -42,11 +42,11 @@ The volume must not be in use by any services.
 
 Examples:
   # Delete a volume
-  berth-cli compose delete-volume 1 my-stack old-volume
+  berth-cli compose delete-volume -s 1 -n my-stack old-volume
 
   # Skip confirmation
-  berth-cli compose delete-volume 1 my-stack unused-vol --yes`,
-	Args: cobra.ExactArgs(3),
+  berth-cli compose delete-volume -s 1 -n my-stack unused-vol --yes`,
+	Args: cobra.ExactArgs(1),
 	RunE: runComposeDeleteVolume,
 }
 
@@ -107,13 +107,13 @@ func runComposeCreateVolume(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	var serverID int32
-	if _, err := fmt.Sscanf(args[0], "%d", &serverID); err != nil {
-		return fmt.Errorf("invalid server ID: %s", args[0])
+	serverID, err := getServerID(cmd)
+	if err != nil {
+		return err
 	}
 
-	stackName := args[1]
-	volumeName := args[2]
+	stackName := getStackName(cmd)
+	volumeName := args[0]
 	skipConfirm, _ := cmd.Flags().GetBool("yes")
 	driver, _ := cmd.Flags().GetString("driver")
 	driverOpts, _ := cmd.Flags().GetStringArray("driver-opt")
@@ -162,13 +162,13 @@ func runComposeDeleteVolume(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	var serverID int32
-	if _, err := fmt.Sscanf(args[0], "%d", &serverID); err != nil {
-		return fmt.Errorf("invalid server ID: %s", args[0])
+	serverID, err := getServerID(cmd)
+	if err != nil {
+		return err
 	}
 
-	stackName := args[1]
-	volumeName := args[2]
+	stackName := getStackName(cmd)
+	volumeName := args[0]
 	skipConfirm, _ := cmd.Flags().GetBool("yes")
 
 	resp, _, err := c.API.ComposeAPI.ApiV1ServersServeridStacksStacknameComposeGet(c.Ctx, serverID, stackName).Execute()
