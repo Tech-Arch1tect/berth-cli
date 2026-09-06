@@ -1,19 +1,16 @@
 package cmd
 
 import (
-	"crypto/tls"
 	"encoding/json"
 	"fmt"
-	"io"
-	"net/http"
 	"os"
-	"strings"
-	"time"
 
+	"github.com/Tech-Arch1tect/berth-cli/pkg/client"
 	"github.com/Tech-Arch1tect/berth-cli/pkg/config"
 	"github.com/Tech-Arch1tect/berth-cli/pkg/ws"
 	"github.com/gorilla/websocket"
 	"github.com/spf13/cobra"
+	berth "github.com/tech-arch1tect/berth-go-api-client"
 )
 
 var (
@@ -164,24 +161,6 @@ Examples:
 	)
 }
 
-type operationRequest struct {
-	Command  string   `json:"command"`
-	Options  []string `json:"options"`
-	Services []string `json:"services"`
-}
-
-type operationResponse struct {
-	OperationID string `json:"operationId"`
-}
-
-type streamMessage struct {
-	Type      string    `json:"type"`
-	Data      string    `json:"data,omitempty"`
-	Timestamp time.Time `json:"timestamp"`
-	Success   *bool     `json:"success,omitempty"`
-	ExitCode  *int      `json:"exitCode,omitempty"`
-}
-
 func runDockerOperation(command string) func(*cobra.Command, []string) error {
 	return func(cmd *cobra.Command, args []string) error {
 		cfg, err := loadConfig(cmd)
@@ -189,10 +168,12 @@ func runDockerOperation(command string) func(*cobra.Command, []string) error {
 			return err
 		}
 
-		serverID := getServerIDStr(cmd)
-		stackName := getStackName(cmd)
+		serverID, err := getServerID(cmd)
+		if err != nil {
+			return err
+		}
 
-		operationID, err := startOperation(cfg, serverID, stackName, operationRequest{
+		operationID, err := startOperation(client.New(cfg), serverID, getStackName(cmd), berth.OperationRequest{
 			Command:  command,
 			Options:  dockerOptions,
 			Services: dockerServices,
@@ -207,49 +188,23 @@ func runDockerOperation(command string) func(*cobra.Command, []string) error {
 			return nil
 		}
 
-		return streamOperation(cfg, serverID, stackName, operationID)
+		return streamOperation(cfg, getServerIDStr(cmd), getStackName(cmd), operationID)
 	}
 }
 
-func startOperation(cfg *config.Config, serverID, stackName string, req operationRequest) (string, error) {
-	reqBody, err := json.Marshal(req)
+func startOperation(c *client.Client, serverID int32, stackName string, req berth.OperationRequest) (string, error) {
+	resp, _, err := c.API.OperationsAPI.ApiV1ServersServeridStacksStacknameOperationsPost(c.Ctx, serverID, stackName).
+		OperationRequest(req).Execute()
 	if err != nil {
-		return "", fmt.Errorf("failed to marshal request: %w", err)
+		return "", fmt.Errorf("failed to start operation: %w", err)
 	}
-
-	url := fmt.Sprintf("%s/api/v1/servers/%s/stacks/%s/operations", cfg.Server, serverID, stackName)
-	httpReq, err := http.NewRequest("POST", url, strings.NewReader(string(reqBody)))
-	if err != nil {
-		return "", fmt.Errorf("failed to create request: %w", err)
+	if !resp.Success {
+		return "", fmt.Errorf("operation start rejected")
 	}
-
-	httpReq.Header.Set("Authorization", "Bearer "+cfg.APIKey)
-	httpReq.Header.Set("Content-Type", "application/json")
-
-	client := &http.Client{Timeout: 30 * time.Second}
-	if cfg.Insecure {
-		client.Transport = &http.Transport{
-			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-		}
+	if resp.Data.OperationId == "" {
+		return "", fmt.Errorf("response contained no operation ID")
 	}
-
-	resp, err := client.Do(httpReq)
-	if err != nil {
-		return "", fmt.Errorf("failed to send request: %w", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		body, _ := io.ReadAll(resp.Body)
-		return "", fmt.Errorf("operation failed: %s - %s", resp.Status, string(body))
-	}
-
-	var opResp operationResponse
-	if err := json.NewDecoder(resp.Body).Decode(&opResp); err != nil {
-		return "", fmt.Errorf("failed to decode response: %w", err)
-	}
-
-	return opResp.OperationID, nil
+	return resp.Data.OperationId, nil
 }
 
 func streamOperation(cfg *config.Config, serverID, stackName, operationID string) error {
@@ -269,7 +224,7 @@ func streamOperation(cfg *config.Config, serverID, stackName, operationID string
 			return fmt.Errorf("WebSocket read error: %w", err)
 		}
 
-		var msg streamMessage
+		var msg berth.StreamMessage
 		if err := json.Unmarshal(data, &msg); err != nil {
 			fmt.Fprintf(os.Stderr, "Error parsing message: %v\n", err)
 			continue
@@ -277,19 +232,25 @@ func streamOperation(cfg *config.Config, serverID, stackName, operationID string
 
 		switch msg.Type {
 		case "stdout", "stderr":
-			if len(msg.Data) > 0 && msg.Data[len(msg.Data)-1] != '\n' {
-				fmt.Println(msg.Data)
+			if msg.Data == nil {
+				continue
+			}
+			data := *msg.Data
+			if len(data) > 0 && data[len(data)-1] != '\n' {
+				fmt.Println(data)
 			} else {
-				fmt.Print(msg.Data)
+				fmt.Print(data)
 			}
 		case "progress":
-			fmt.Printf("[%s] %s\n", msg.Timestamp.Format("15:04:05"), msg.Data)
+			if msg.Data != nil {
+				fmt.Printf("[%s] %s\n", msg.Timestamp.Format("15:04:05"), *msg.Data)
+			}
 		case "complete":
 			exitCode := 0
-			if msg.ExitCode != nil {
-				exitCode = *msg.ExitCode
+			if msg.ExitCode.IsSet() && msg.ExitCode.Get() != nil {
+				exitCode = int(*msg.ExitCode.Get())
 			}
-			success := msg.Success != nil && *msg.Success
+			success := msg.Success.IsSet() && msg.Success.Get() != nil && *msg.Success.Get()
 			if success {
 				fmt.Printf("\nOperation completed successfully (exit code: %d)\n", exitCode)
 			} else {
@@ -297,7 +258,9 @@ func streamOperation(cfg *config.Config, serverID, stackName, operationID string
 			}
 			os.Exit(exitCode)
 		case "error":
-			fmt.Fprintf(os.Stderr, "Error: %s\n", msg.Data)
+			if msg.Data != nil {
+				fmt.Fprintf(os.Stderr, "Error: %s\n", *msg.Data)
+			}
 			os.Exit(1)
 		}
 	}
