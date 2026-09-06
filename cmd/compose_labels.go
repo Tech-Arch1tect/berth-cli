@@ -72,8 +72,8 @@ func runComposeSetLabel(cmd *cobra.Command, args []string) error {
 	}
 
 	serviceChanges := berth.NewServiceChanges()
-	serviceChanges.SetLabels(map[string]string{
-		key: value,
+	serviceChanges.SetLabels(map[string]*string{
+		key: &value,
 	})
 
 	changes := berth.NewComposeChanges()

@@ -72,8 +72,8 @@ func runComposeSetEnv(cmd *cobra.Command, args []string) error {
 	}
 
 	serviceChanges := berth.NewServiceChanges()
-	serviceChanges.SetEnvironment(map[string]string{
-		key: value,
+	serviceChanges.SetEnvironment(map[string]*string{
+		key: &value,
 	})
 
 	changes := berth.NewComposeChanges()

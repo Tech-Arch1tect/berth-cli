@@ -24,8 +24,9 @@ func updateComposeWithConfirm(c *client.Client, serverID int32, stackName string
 		return fmt.Errorf("failed to preview changes: %w", err)
 	}
 
-	if result.HasOriginalYaml() && result.HasModifiedYaml() {
-		displayDiff(result.GetOriginalYaml(), result.GetModifiedYaml())
+	data := result.GetData()
+	if data.HasOriginalYaml() && data.HasModifiedYaml() {
+		displayDiff(data.GetOriginalYaml(), data.GetModifiedYaml())
 	}
 
 	if !skipConfirm {

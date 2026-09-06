@@ -202,7 +202,9 @@ func runComposeAddPort(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to get compose config: %w", err)
 	}
 
-	currentPorts, err := getCurrentPorts(resp.GetServices(), serviceName)
+	data := resp.GetData()
+
+	currentPorts, err := getCurrentPorts(data.GetServices(), serviceName)
 	if err != nil {
 		return err
 	}
@@ -256,7 +258,9 @@ func runComposeRemovePort(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to get compose config: %w", err)
 	}
 
-	currentPorts, err := getCurrentPorts(resp.GetServices(), serviceName)
+	data := resp.GetData()
+
+	currentPorts, err := getCurrentPorts(data.GetServices(), serviceName)
 	if err != nil {
 		return err
 	}

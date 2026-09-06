@@ -88,7 +88,9 @@ func runComposeCreateConfig(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to get compose config: %w", err)
 	}
 
-	if stackConfigExists(resp.GetConfigs(), configName) {
+	data := resp.GetData()
+
+	if stackConfigExists(data.GetConfigs(), configName) {
 		return fmt.Errorf("config '%s' already exists in stack", configName)
 	}
 
@@ -135,7 +137,9 @@ func runComposeDeleteConfig(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to get compose config: %w", err)
 	}
 
-	if !stackConfigExists(resp.GetConfigs(), configName) {
+	data := resp.GetData()
+
+	if !stackConfigExists(data.GetConfigs(), configName) {
 		return fmt.Errorf("config '%s' not found in stack", configName)
 	}
 

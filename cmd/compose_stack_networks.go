@@ -107,7 +107,9 @@ func runComposeCreateNetwork(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to get compose config: %w", err)
 	}
 
-	if stackNetworkExists(resp.GetNetworks(), networkName) {
+	data := resp.GetData()
+
+	if stackNetworkExists(data.GetNetworks(), networkName) {
 		return fmt.Errorf("network '%s' already exists in stack", networkName)
 	}
 
@@ -176,11 +178,13 @@ func runComposeDeleteNetwork(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to get compose config: %w", err)
 	}
 
-	if !stackNetworkExists(resp.GetNetworks(), networkName) {
+	data := resp.GetData()
+
+	if !stackNetworkExists(data.GetNetworks(), networkName) {
 		return fmt.Errorf("network '%s' not found in stack", networkName)
 	}
 
-	using := getServicesUsingNetwork(resp.GetServices(), networkName)
+	using := getServicesUsingNetwork(data.GetServices(), networkName)
 	if len(using) > 0 {
 		return fmt.Errorf("network '%s' is in use by services: %v\nRemove services from the network first", networkName, using)
 	}

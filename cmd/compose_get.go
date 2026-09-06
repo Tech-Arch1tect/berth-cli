@@ -64,25 +64,27 @@ func runComposeGet(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to get compose config: %w", err)
 	}
 
+	data := resp.GetData()
+
 	config := make(map[string]any)
-	config["services"] = resp.GetServices()
-	if resp.HasNetworks() {
-		config["networks"] = resp.GetNetworks()
+	config["services"] = data.GetServices()
+	if data.HasNetworks() {
+		config["networks"] = data.GetNetworks()
 	}
-	if resp.HasVolumes() {
-		config["volumes"] = resp.GetVolumes()
+	if data.HasVolumes() {
+		config["volumes"] = data.GetVolumes()
 	}
-	if resp.HasConfigs() {
-		config["configs"] = resp.GetConfigs()
+	if data.HasConfigs() {
+		config["configs"] = data.GetConfigs()
 	}
-	if resp.HasSecrets() {
-		config["secrets"] = resp.GetSecrets()
+	if data.HasSecrets() {
+		config["secrets"] = data.GetSecrets()
 	}
 
 	var output any = config
 
 	if serviceName != "" {
-		services := resp.GetServices()
+		services := data.GetServices()
 		service, ok := services[serviceName]
 		if !ok {
 			return fmt.Errorf("service '%s' not found", serviceName)

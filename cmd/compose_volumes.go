@@ -177,7 +177,9 @@ func runComposeAddVolume(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to get compose config: %w", err)
 	}
 
-	currentVolumes, err := getCurrentVolumes(resp.GetServices(), serviceName)
+	data := resp.GetData()
+
+	currentVolumes, err := getCurrentVolumes(data.GetServices(), serviceName)
 	if err != nil {
 		return err
 	}
@@ -225,7 +227,9 @@ func runComposeRemoveVolume(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to get compose config: %w", err)
 	}
 
-	currentVolumes, err := getCurrentVolumes(resp.GetServices(), serviceName)
+	data := resp.GetData()
+
+	currentVolumes, err := getCurrentVolumes(data.GetServices(), serviceName)
 	if err != nil {
 		return err
 	}

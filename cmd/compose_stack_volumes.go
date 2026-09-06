@@ -124,7 +124,9 @@ func runComposeCreateVolume(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to get compose config: %w", err)
 	}
 
-	if stackVolumeExists(resp.GetVolumes(), volumeName) {
+	data := resp.GetData()
+
+	if stackVolumeExists(data.GetVolumes(), volumeName) {
 		return fmt.Errorf("volume '%s' already exists in stack", volumeName)
 	}
 
@@ -176,11 +178,13 @@ func runComposeDeleteVolume(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to get compose config: %w", err)
 	}
 
-	if !stackVolumeExists(resp.GetVolumes(), volumeName) {
+	data := resp.GetData()
+
+	if !stackVolumeExists(data.GetVolumes(), volumeName) {
 		return fmt.Errorf("volume '%s' not found in stack", volumeName)
 	}
 
-	using := getServicesUsingStackVolume(resp.GetServices(), volumeName)
+	using := getServicesUsingStackVolume(data.GetServices(), volumeName)
 	if len(using) > 0 {
 		return fmt.Errorf("volume '%s' is in use by services: %v\nRemove volume mounts from services first", volumeName, using)
 	}

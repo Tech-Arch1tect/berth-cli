@@ -100,7 +100,9 @@ func runComposeAddService(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to get compose config: %w", err)
 	}
 
-	if serviceExists(resp.GetServices(), serviceName) {
+	data := resp.GetData()
+
+	if serviceExists(data.GetServices(), serviceName) {
 		return fmt.Errorf("service '%s' already exists in stack", serviceName)
 	}
 
@@ -143,7 +145,9 @@ func runComposeRemoveService(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to get compose config: %w", err)
 	}
 
-	services := resp.GetServices()
+	data := resp.GetData()
+
+	services := data.GetServices()
 	if !serviceExists(services, serviceName) {
 		return fmt.Errorf("service '%s' not found in stack", serviceName)
 	}
@@ -187,7 +191,9 @@ func runComposeRenameService(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to get compose config: %w", err)
 	}
 
-	services := resp.GetServices()
+	data := resp.GetData()
+
+	services := data.GetServices()
 	if !serviceExists(services, oldName) {
 		return fmt.Errorf("service '%s' not found in stack", oldName)
 	}

@@ -94,12 +94,14 @@ func runComposeAddNetwork(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to get compose config: %w", err)
 	}
 
-	stackNetworks := resp.GetNetworks()
+	data := resp.GetData()
+
+	stackNetworks := data.GetNetworks()
 	if _, exists := stackNetworks[networkName]; !exists {
 		return fmt.Errorf("network '%s' does not exist in stack. Define it first with 'compose create-network'", networkName)
 	}
 
-	currentNetworks, err := getServiceNetworks(resp.GetServices(), serviceName)
+	currentNetworks, err := getServiceNetworks(data.GetServices(), serviceName)
 	if err != nil {
 		return err
 	}
@@ -145,7 +147,9 @@ func runComposeRemoveNetwork(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to get compose config: %w", err)
 	}
 
-	currentNetworks, err := getServiceNetworks(resp.GetServices(), serviceName)
+	data := resp.GetData()
+
+	currentNetworks, err := getServiceNetworks(data.GetServices(), serviceName)
 	if err != nil {
 		return err
 	}

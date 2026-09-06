@@ -88,7 +88,9 @@ func runComposeCreateSecret(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to get compose config: %w", err)
 	}
 
-	if stackSecretExists(resp.GetSecrets(), secretName) {
+	data := resp.GetData()
+
+	if stackSecretExists(data.GetSecrets(), secretName) {
 		return fmt.Errorf("secret '%s' already exists in stack", secretName)
 	}
 
@@ -135,7 +137,9 @@ func runComposeDeleteSecret(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to get compose config: %w", err)
 	}
 
-	if !stackSecretExists(resp.GetSecrets(), secretName) {
+	data := resp.GetData()
+
+	if !stackSecretExists(data.GetSecrets(), secretName) {
 		return fmt.Errorf("secret '%s' not found in stack", secretName)
 	}
 
