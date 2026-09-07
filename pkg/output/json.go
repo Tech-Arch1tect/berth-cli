@@ -2,6 +2,7 @@ package output
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 )
 
@@ -15,4 +16,9 @@ func (p *JSONPrinter) Print(w io.Writer, data any) error {
 	encoder := json.NewEncoder(w)
 	encoder.SetIndent("", "  ")
 	return encoder.Encode(data)
+}
+
+func (p *JSONPrinter) PrintEmpty(w io.Writer, message string) error {
+	_, err := fmt.Fprintln(w, "[]")
+	return err
 }

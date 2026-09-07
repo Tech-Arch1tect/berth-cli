@@ -26,6 +26,7 @@ func ParseFormat(s string) (Format, error) {
 
 type Printer interface {
 	Print(w io.Writer, data any) error
+	PrintEmpty(w io.Writer, message string) error
 }
 
 func New(format Format) Printer {

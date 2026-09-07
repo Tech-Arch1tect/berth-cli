@@ -54,8 +54,7 @@ func runListServers(cmd *cobra.Command, args []string) error {
 	data := resp.GetData()
 	servers := data.GetServers()
 	if len(servers) == 0 {
-		fmt.Println("No servers found.")
-		return nil
+		return output.New(format).PrintEmpty(os.Stdout, "No servers found.")
 	}
 
 	tableData := &output.TableData{
@@ -108,8 +107,7 @@ func runListStacks(cmd *cobra.Command, args []string) error {
 	data := resp.GetData()
 	stacks := data.GetStacks()
 	if len(stacks) == 0 {
-		fmt.Printf("No stacks found on server %s.\n", getServerIDStr(cmd))
-		return nil
+		return output.New(format).PrintEmpty(os.Stdout, fmt.Sprintf("No stacks found on server %s.", getServerIDStr(cmd)))
 	}
 
 	tableData := &output.TableData{

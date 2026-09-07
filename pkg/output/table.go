@@ -41,6 +41,11 @@ func (p *TablePrinter) Print(w io.Writer, data any) error {
 	return tw.Flush()
 }
 
+func (p *TablePrinter) PrintEmpty(w io.Writer, message string) error {
+	_, err := fmt.Fprintln(w, message)
+	return err
+}
+
 func formatValue(v any) string {
 	if v == nil {
 		return ""
