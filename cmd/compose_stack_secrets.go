@@ -48,12 +48,12 @@ func init() {
 	composeCmd.AddCommand(composeCreateSecretCmd)
 	composeCmd.AddCommand(composeDeleteSecretCmd)
 
-	composeCreateSecretCmd.Flags().BoolP("yes", "y", false, "Skip confirmation and apply immediately")
+	addYesFlag(composeCreateSecretCmd)
 	composeCreateSecretCmd.Flags().String("file", "", "Path to secret file")
 	composeCreateSecretCmd.Flags().String("environment", "", "Environment variable containing the secret")
 	composeCreateSecretCmd.Flags().Bool("external", false, "Mark as external secret")
 
-	composeDeleteSecretCmd.Flags().BoolP("yes", "y", false, "Skip confirmation and apply immediately")
+	addYesFlag(composeDeleteSecretCmd)
 }
 
 func stackSecretExists(secrets map[string]map[string]any, secretName string) bool {

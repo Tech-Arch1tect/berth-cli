@@ -24,7 +24,7 @@ Examples:
 
 func init() {
 	composeCmd.AddCommand(composeSetImageCmd)
-	composeSetImageCmd.Flags().BoolP("yes", "y", false, "Skip confirmation and apply immediately")
+	addYesFlag(composeSetImageCmd)
 }
 
 func runComposeSetImage(cmd *cobra.Command, args []string) error {

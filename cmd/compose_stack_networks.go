@@ -53,7 +53,7 @@ func init() {
 	composeCmd.AddCommand(composeCreateNetworkCmd)
 	composeCmd.AddCommand(composeDeleteNetworkCmd)
 
-	composeCreateNetworkCmd.Flags().BoolP("yes", "y", false, "Skip confirmation and apply immediately")
+	addYesFlag(composeCreateNetworkCmd)
 	composeCreateNetworkCmd.Flags().String("driver", "", "Network driver (e.g., bridge, overlay)")
 	composeCreateNetworkCmd.Flags().Bool("external", false, "Mark as external network")
 	composeCreateNetworkCmd.Flags().String("subnet", "", "Subnet in CIDR format (e.g., 172.28.0.0/16)")
@@ -61,7 +61,7 @@ func init() {
 	composeCreateNetworkCmd.Flags().String("ip-range", "", "IP range for allocation")
 	composeCreateNetworkCmd.Flags().String("ipam-driver", "", "IPAM driver (default: default)")
 
-	composeDeleteNetworkCmd.Flags().BoolP("yes", "y", false, "Skip confirmation and apply immediately")
+	addYesFlag(composeDeleteNetworkCmd)
 }
 
 func stackNetworkExists(networks map[string]map[string]any, networkName string) bool {

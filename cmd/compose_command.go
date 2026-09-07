@@ -49,8 +49,8 @@ Examples:
 func init() {
 	composeCmd.AddCommand(composeSetCommandCmd)
 	composeCmd.AddCommand(composeSetEntrypointCmd)
-	composeSetCommandCmd.Flags().BoolP("yes", "y", false, "Skip confirmation and apply immediately")
-	composeSetEntrypointCmd.Flags().BoolP("yes", "y", false, "Skip confirmation and apply immediately")
+	addYesFlag(composeSetCommandCmd)
+	addYesFlag(composeSetEntrypointCmd)
 }
 
 func runComposeSetCommand(cmd *cobra.Command, args []string) error {

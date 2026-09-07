@@ -51,8 +51,8 @@ Examples:
 func init() {
 	composeCmd.AddCommand(composeAddVolumeCmd)
 	composeCmd.AddCommand(composeRemoveVolumeCmd)
-	composeAddVolumeCmd.Flags().BoolP("yes", "y", false, "Skip confirmation and apply immediately")
-	composeRemoveVolumeCmd.Flags().BoolP("yes", "y", false, "Skip confirmation and apply immediately")
+	addYesFlag(composeAddVolumeCmd)
+	addYesFlag(composeRemoveVolumeCmd)
 }
 
 type volumeMount struct {

@@ -28,6 +28,10 @@ func addStackFlag(cmd *cobra.Command, persistent bool) {
 	}
 }
 
+func addYesFlag(cmd *cobra.Command) {
+	cmd.Flags().BoolP("yes", "y", false, "Skip confirmation and apply immediately")
+}
+
 func getServerID(cmd *cobra.Command) (int32, error) {
 	s, err := cmd.Flags().GetString("server-id")
 	if err != nil {

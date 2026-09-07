@@ -51,8 +51,8 @@ Examples:
 func init() {
 	composeCmd.AddCommand(composeAddPortCmd)
 	composeCmd.AddCommand(composeRemovePortCmd)
-	composeAddPortCmd.Flags().BoolP("yes", "y", false, "Skip confirmation and apply immediately")
-	composeRemovePortCmd.Flags().BoolP("yes", "y", false, "Skip confirmation and apply immediately")
+	addYesFlag(composeAddPortCmd)
+	addYesFlag(composeRemovePortCmd)
 }
 
 type portMapping struct {

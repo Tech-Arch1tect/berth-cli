@@ -54,12 +54,12 @@ func init() {
 	composeCmd.AddCommand(composeCreateVolumeCmd)
 	composeCmd.AddCommand(composeDeleteVolumeCmd)
 
-	composeCreateVolumeCmd.Flags().BoolP("yes", "y", false, "Skip confirmation and apply immediately")
+	addYesFlag(composeCreateVolumeCmd)
 	composeCreateVolumeCmd.Flags().String("driver", "", "Volume driver (e.g., local, nfs)")
 	composeCreateVolumeCmd.Flags().StringArray("driver-opt", nil, "Driver options (can be specified multiple times: --driver-opt key=value)")
 	composeCreateVolumeCmd.Flags().Bool("external", false, "Mark as external volume")
 
-	composeDeleteVolumeCmd.Flags().BoolP("yes", "y", false, "Skip confirmation and apply immediately")
+	addYesFlag(composeDeleteVolumeCmd)
 }
 
 func stackVolumeExists(volumes map[string]map[string]any, volumeName string) bool {

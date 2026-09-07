@@ -41,8 +41,8 @@ Examples:
 func init() {
 	composeCmd.AddCommand(composeSetLabelCmd)
 	composeCmd.AddCommand(composeUnsetLabelCmd)
-	composeSetLabelCmd.Flags().BoolP("yes", "y", false, "Skip confirmation and apply immediately")
-	composeUnsetLabelCmd.Flags().BoolP("yes", "y", false, "Skip confirmation and apply immediately")
+	addYesFlag(composeSetLabelCmd)
+	addYesFlag(composeUnsetLabelCmd)
 }
 
 func runComposeSetLabel(cmd *cobra.Command, args []string) error {

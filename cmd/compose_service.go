@@ -66,11 +66,11 @@ func init() {
 	composeCmd.AddCommand(composeRemoveServiceCmd)
 	composeCmd.AddCommand(composeRenameServiceCmd)
 
-	composeAddServiceCmd.Flags().BoolP("yes", "y", false, "Skip confirmation and apply immediately")
+	addYesFlag(composeAddServiceCmd)
 	composeAddServiceCmd.Flags().String("restart", "", "Restart policy (no, always, on-failure, unless-stopped)")
 
-	composeRemoveServiceCmd.Flags().BoolP("yes", "y", false, "Skip confirmation and apply immediately")
-	composeRenameServiceCmd.Flags().BoolP("yes", "y", false, "Skip confirmation and apply immediately")
+	addYesFlag(composeRemoveServiceCmd)
+	addYesFlag(composeRenameServiceCmd)
 }
 
 func serviceExists(services map[string]map[string]any, serviceName string) bool {

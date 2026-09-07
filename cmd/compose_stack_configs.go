@@ -48,12 +48,12 @@ func init() {
 	composeCmd.AddCommand(composeCreateConfigCmd)
 	composeCmd.AddCommand(composeDeleteConfigCmd)
 
-	composeCreateConfigCmd.Flags().BoolP("yes", "y", false, "Skip confirmation and apply immediately")
+	addYesFlag(composeCreateConfigCmd)
 	composeCreateConfigCmd.Flags().String("file", "", "Path to config file")
 	composeCreateConfigCmd.Flags().String("environment", "", "Environment variable containing the config")
 	composeCreateConfigCmd.Flags().Bool("external", false, "Mark as external config")
 
-	composeDeleteConfigCmd.Flags().BoolP("yes", "y", false, "Skip confirmation and apply immediately")
+	addYesFlag(composeDeleteConfigCmd)
 }
 
 func stackConfigExists(configs map[string]map[string]any, configName string) bool {

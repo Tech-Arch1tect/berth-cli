@@ -29,7 +29,7 @@ Examples:
 
 func init() {
 	composeCmd.AddCommand(composeSetRestartCmd)
-	composeSetRestartCmd.Flags().BoolP("yes", "y", false, "Skip confirmation and apply immediately")
+	addYesFlag(composeSetRestartCmd)
 }
 
 func runComposeSetRestart(cmd *cobra.Command, args []string) error {

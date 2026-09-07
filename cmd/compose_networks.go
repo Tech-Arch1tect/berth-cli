@@ -41,8 +41,8 @@ Examples:
 func init() {
 	composeCmd.AddCommand(composeAddNetworkCmd)
 	composeCmd.AddCommand(composeRemoveNetworkCmd)
-	composeAddNetworkCmd.Flags().BoolP("yes", "y", false, "Skip confirmation and apply immediately")
-	composeRemoveNetworkCmd.Flags().BoolP("yes", "y", false, "Skip confirmation and apply immediately")
+	addYesFlag(composeAddNetworkCmd)
+	addYesFlag(composeRemoveNetworkCmd)
 }
 
 func getServiceNetworks(services map[string]map[string]any, serviceName string) (map[string]any, error) {
