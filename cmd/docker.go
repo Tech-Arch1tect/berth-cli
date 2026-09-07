@@ -196,7 +196,7 @@ func startOperation(c *client.Client, serverID int32, stackName string, req bert
 	resp, _, err := c.API.OperationsAPI.ApiV1ServersServeridStacksStacknameOperationsPost(c.Ctx, serverID, stackName).
 		OperationRequest(req).Execute()
 	if err != nil {
-		return "", fmt.Errorf("failed to start operation: %w", err)
+		return "", err
 	}
 	if !resp.Success {
 		return "", fmt.Errorf("operation start rejected")
