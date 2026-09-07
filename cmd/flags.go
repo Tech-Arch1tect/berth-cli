@@ -2,6 +2,8 @@ package cmd
 
 import (
 	"fmt"
+	"math"
+	"strconv"
 
 	"github.com/spf13/cobra"
 )
@@ -31,11 +33,11 @@ func getServerID(cmd *cobra.Command) (int32, error) {
 	if err != nil {
 		return 0, fmt.Errorf("server-id flag not found: %w", err)
 	}
-	var id int32
-	if _, err := fmt.Sscanf(s, "%d", &id); err != nil {
-		return 0, fmt.Errorf("invalid server ID: %s", s)
+	id, err := strconv.Atoi(s)
+	if err != nil || id <= 0 || id > math.MaxInt32 {
+		return 0, fmt.Errorf("invalid server ID %q: must be a positive whole number within the allowed range (run %q to see valid IDs)", s, "list servers")
 	}
-	return id, nil
+	return int32(id), nil
 }
 
 func getServerIDStr(cmd *cobra.Command) string {
