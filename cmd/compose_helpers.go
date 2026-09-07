@@ -8,11 +8,21 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"sort"
 	"strings"
 
 	"github.com/Tech-Arch1tect/berth-cli/pkg/client"
 	berth "github.com/tech-arch1tect/berth-go-api-client"
 )
+
+func serviceNotFoundError(services map[string]map[string]any, serviceName string) error {
+	names := make([]string, 0, len(services))
+	for name := range services {
+		names = append(names, name)
+	}
+	sort.Strings(names)
+	return fmt.Errorf("service '%s' not found in stack; available services: %s", serviceName, strings.Join(names, ", "))
+}
 
 func updateComposeWithConfirm(c *client.Client, serverID int32, stackName string, changes *berth.ComposeChanges, skipConfirm bool) error {
 	req := berth.NewUpdateComposeRequest(*changes)

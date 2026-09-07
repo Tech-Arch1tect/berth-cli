@@ -48,7 +48,7 @@ func init() {
 func getServiceNetworks(services map[string]map[string]any, serviceName string) (map[string]any, error) {
 	service, ok := services[serviceName]
 	if !ok {
-		return nil, fmt.Errorf("service '%s' not found", serviceName)
+		return nil, serviceNotFoundError(services, serviceName)
 	}
 
 	networksRaw, ok := service["networks"]

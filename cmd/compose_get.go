@@ -87,7 +87,7 @@ func runComposeGet(cmd *cobra.Command, args []string) error {
 		services := data.GetServices()
 		service, ok := services[serviceName]
 		if !ok {
-			return fmt.Errorf("service '%s' not found", serviceName)
+			return serviceNotFoundError(services, serviceName)
 		}
 
 		output = service

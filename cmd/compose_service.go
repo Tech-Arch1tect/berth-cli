@@ -149,7 +149,7 @@ func runComposeRemoveService(cmd *cobra.Command, args []string) error {
 
 	services := data.GetServices()
 	if !serviceExists(services, serviceName) {
-		return fmt.Errorf("service '%s' not found in stack", serviceName)
+		return serviceNotFoundError(services, serviceName)
 	}
 
 	if len(services) == 1 {
@@ -195,7 +195,7 @@ func runComposeRenameService(cmd *cobra.Command, args []string) error {
 
 	services := data.GetServices()
 	if !serviceExists(services, oldName) {
-		return fmt.Errorf("service '%s' not found in stack", oldName)
+		return serviceNotFoundError(services, oldName)
 	}
 
 	if serviceExists(services, newName) {

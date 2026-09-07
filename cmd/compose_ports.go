@@ -151,7 +151,7 @@ func normalizePortEntry(p any) (map[string]any, error) {
 func getCurrentPorts(services map[string]map[string]any, serviceName string) ([]map[string]any, error) {
 	service, ok := services[serviceName]
 	if !ok {
-		return nil, fmt.Errorf("service '%s' not found", serviceName)
+		return nil, serviceNotFoundError(services, serviceName)
 	}
 
 	portsRaw, ok := service["ports"]
