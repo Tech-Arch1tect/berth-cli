@@ -16,8 +16,9 @@ var (
 )
 
 var rootCmd = &cobra.Command{
-	Use:   "berth-cli",
-	Short: "Berth CLI - Manage Docker stacks remotely",
+	Use:     "berth-cli",
+	Short:   "Berth CLI - Manage Docker stacks remotely",
+	Version: Version,
 	Long: `A command-line interface for managing Docker stacks through the Berth platform.
 
 Configuration is loaded from (in priority order):
@@ -25,7 +26,10 @@ Configuration is loaded from (in priority order):
   2. Environment variables (BERTH_SERVER_URL, BERTH_API_KEY, BERTH_INSECURE)
   3. ./berth-cli.yaml
   4. ~/.config/berth-cli/config.yaml
-  5. ~/.berth-cli.yaml`,
+  5. ~/.berth-cli.yaml
+
+Shell completion scripts for bash, zsh, fish and powershell are generated
+by the 'berth-cli completion' command.`,
 	SilenceUsage:  true,
 	SilenceErrors: true,
 }
