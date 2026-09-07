@@ -53,8 +53,10 @@ func runListServers(cmd *cobra.Command, args []string) error {
 
 	data := resp.GetData()
 	servers := data.GetServers()
+	printer := output.NewWithColour(format, output.ColourSupported(flagNoColour))
+
 	if len(servers) == 0 {
-		return output.New(format).PrintEmpty(os.Stdout, "No servers found.")
+		return printer.PrintEmpty(os.Stdout, "No servers found.")
 	}
 
 	tableData := &output.TableData{
@@ -63,7 +65,7 @@ func runListServers(cmd *cobra.Command, args []string) error {
 			{Header: "Name", Field: "name"},
 			{Header: "Host", Field: "host"},
 			{Header: "Port", Field: "port"},
-			{Header: "Active", Field: "active"},
+			{Header: "Active", Field: "active", Colour: output.BoolColour},
 			{Header: "SSL Skip", Field: "ssl_skip"},
 		},
 		Rows: make([]map[string]any, 0, len(servers)),
@@ -80,7 +82,7 @@ func runListServers(cmd *cobra.Command, args []string) error {
 		})
 	}
 
-	return output.New(format).Print(os.Stdout, tableData)
+	return printer.Print(os.Stdout, tableData)
 }
 
 func runListStacks(cmd *cobra.Command, args []string) error {
@@ -106,14 +108,16 @@ func runListStacks(cmd *cobra.Command, args []string) error {
 
 	data := resp.GetData()
 	stacks := data.GetStacks()
+	printer := output.NewWithColour(format, output.ColourSupported(flagNoColour))
+
 	if len(stacks) == 0 {
-		return output.New(format).PrintEmpty(os.Stdout, fmt.Sprintf("No stacks found on server %s.", getServerIDStr(cmd)))
+		return printer.PrintEmpty(os.Stdout, fmt.Sprintf("No stacks found on server %s.", getServerIDStr(cmd)))
 	}
 
 	tableData := &output.TableData{
 		Columns: []output.Column{
 			{Header: "Name", Field: "name"},
-			{Header: "Healthy", Field: "healthy"},
+			{Header: "Healthy", Field: "healthy", Colour: output.BoolColour},
 			{Header: "Total", Field: "total"},
 			{Header: "Running", Field: "running"},
 			{Header: "Compose File", Field: "compose_file"},
@@ -131,5 +135,5 @@ func runListStacks(cmd *cobra.Command, args []string) error {
 		})
 	}
 
-	return output.New(format).Print(os.Stdout, tableData)
+	return printer.Print(os.Stdout, tableData)
 }

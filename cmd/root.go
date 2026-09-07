@@ -13,6 +13,7 @@ var (
 	flagInsecure bool
 	flagOutput   string
 	flagVerbose  bool
+	flagNoColour bool
 )
 
 var rootCmd = &cobra.Command{
@@ -44,6 +45,7 @@ func init() {
 	rootCmd.PersistentFlags().BoolVar(&flagInsecure, "insecure", false, "Skip TLS certificate verification")
 	rootCmd.PersistentFlags().StringVarP(&flagOutput, "output", "o", "table", "Output format: table, json")
 	rootCmd.PersistentFlags().BoolVarP(&flagVerbose, "verbose", "v", false, "Enable verbose output (show HTTP requests)")
+	rootCmd.PersistentFlags().BoolVar(&flagNoColour, "no-colour", false, "Disable coloured output")
 }
 
 func loadConfig(cmd *cobra.Command) (*config.Config, error) {

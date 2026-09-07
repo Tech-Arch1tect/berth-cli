@@ -4,10 +4,17 @@ import (
 	"fmt"
 	"io"
 	"strings"
-	"text/tabwriter"
+	"unicode/utf8"
 )
 
-type TablePrinter struct{}
+type TablePrinter struct {
+	colourEnabled bool
+}
+
+type tableCell struct {
+	text  string
+	width int
+}
 
 func (p *TablePrinter) Print(w io.Writer, data any) error {
 	tableData, ok := data.(*TableData)
@@ -19,31 +26,59 @@ func (p *TablePrinter) Print(w io.Writer, data any) error {
 		return nil
 	}
 
-	tw := tabwriter.NewWriter(w, 0, 0, 2, ' ', 0)
+	widths := make([]int, len(tableData.Columns))
+	lines := make([][]tableCell, 0, len(tableData.Rows)+2)
 
-	headers := make([]string, len(tableData.Columns))
-	separators := make([]string, len(tableData.Columns))
+	headers := make([]tableCell, len(tableData.Columns))
 	for i, col := range tableData.Columns {
-		headers[i] = col.Header
-		separators[i] = strings.Repeat("-", len(col.Header))
+		headers[i] = plainCell(col.Header)
+		widths[i] = headers[i].width
 	}
-	fmt.Fprintln(tw, strings.Join(headers, "\t"))
-	fmt.Fprintln(tw, strings.Join(separators, "\t"))
+	lines = append(lines, headers)
+
+	separators := make([]tableCell, len(tableData.Columns))
+	for i, col := range tableData.Columns {
+		separators[i] = plainCell(strings.Repeat("-", len(col.Header)))
+	}
+	lines = append(lines, separators)
 
 	for _, row := range tableData.Rows {
-		values := make([]string, len(tableData.Columns))
+		cells := make([]tableCell, len(tableData.Columns))
 		for i, col := range tableData.Columns {
-			values[i] = formatValue(row[col.Field])
+			text := formatValue(row[col.Field])
+			cells[i] = plainCell(text)
+			widths[i] = max(widths[i], cells[i].width)
+			if col.Colour != nil {
+				if code, ok := col.Colour(row[col.Field]); ok {
+					cells[i].text = colourise(text, code, p.colourEnabled)
+				}
+			}
 		}
-		fmt.Fprintln(tw, strings.Join(values, "\t"))
+		lines = append(lines, cells)
 	}
 
-	return tw.Flush()
+	var b strings.Builder
+	for _, line := range lines {
+		for i, cell := range line {
+			b.WriteString(cell.text)
+			if i < len(line)-1 {
+				b.WriteString(strings.Repeat(" ", widths[i]-cell.width+2))
+			}
+		}
+		b.WriteString("\n")
+	}
+
+	_, err := io.WriteString(w, b.String())
+	return err
 }
 
 func (p *TablePrinter) PrintEmpty(w io.Writer, message string) error {
 	_, err := fmt.Fprintln(w, message)
 	return err
+}
+
+func plainCell(text string) tableCell {
+	return tableCell{text: text, width: utf8.RuneCountInString(text)}
 }
 
 func formatValue(v any) string {

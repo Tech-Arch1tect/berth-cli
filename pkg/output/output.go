@@ -38,6 +38,14 @@ func New(format Format) Printer {
 	}
 }
 
+func NewWithColour(format Format, colourEnabled bool) Printer {
+	printer := New(format)
+	if tablePrinter, ok := printer.(*TablePrinter); ok {
+		tablePrinter.colourEnabled = colourEnabled
+	}
+	return printer
+}
+
 func Print(format Format, data any) error {
 	return New(format).Print(os.Stdout, data)
 }
@@ -45,6 +53,7 @@ func Print(format Format, data any) error {
 type Column struct {
 	Header string
 	Field  string
+	Colour ColourFunc
 }
 
 type TableData struct {
