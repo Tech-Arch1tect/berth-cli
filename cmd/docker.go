@@ -241,10 +241,13 @@ func streamOperation(cfg *config.Config, serverID, stackName, operationID string
 			}
 			data := *msg.Data
 			if len(data) > 0 && data[len(data)-1] != '\n' {
-				fmt.Println(data)
-			} else {
-				fmt.Print(data)
+				data += "\n"
 			}
+			if msg.Type == "stderr" {
+				fmt.Fprint(os.Stderr, data)
+				break
+			}
+			fmt.Print(data)
 		case "progress":
 			if msg.Data != nil {
 				fmt.Printf("[%s] %s\n", msg.Timestamp.Format("15:04:05"), *msg.Data)
