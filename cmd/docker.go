@@ -199,6 +199,10 @@ func startOperation(c *client.Client, serverID int32, stackName string, req bert
 		return "", err
 	}
 	if !resp.Success {
+		reason := resp.Error.Get()
+		if reason != nil && reason.Message != "" {
+			return "", fmt.Errorf("operation start rejected: %s", reason.Message)
+		}
 		return "", fmt.Errorf("operation start rejected")
 	}
 	if resp.Data.OperationId == "" {
