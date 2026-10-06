@@ -1,14 +1,15 @@
 package cmd
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/Tech-Arch1tect/berth-cli/pkg/client"
 	"github.com/Tech-Arch1tect/berth-cli/pkg/config"
 	"github.com/Tech-Arch1tect/berth-cli/pkg/ws"
-	"github.com/gorilla/websocket"
 	"github.com/spf13/cobra"
 	berth "github.com/tech-arch1tect/berth-go-api-client"
 )
@@ -17,6 +18,7 @@ var (
 	dockerServices []string
 	dockerOptions  []string
 	dockerFollow   bool
+	dockerTimeout  time.Duration
 )
 
 var dockerCmd = &cobra.Command{
@@ -25,8 +27,8 @@ var dockerCmd = &cobra.Command{
 	Long: `Execute Docker Compose operations on remote stacks via a Berth server.
 
 Supports up, down, start, stop, restart, and pull commands. Operations are
-streamed in real-time over WebSocket by default. Use --follow=false to start
-an operation without waiting for output.
+streamed in real-time over WebSocket by default, for up to one hour unless
+--timeout is set. Use --follow=false to start an operation without waiting.
 
 Examples:
   # Start a stack
@@ -50,6 +52,7 @@ func init() {
 	dockerCmd.PersistentFlags().StringSliceVar(&dockerServices, "services", []string{}, "Specific services to target (comma-separated)")
 	dockerCmd.PersistentFlags().StringSliceVar(&dockerOptions, "options", []string{}, "Additional options to pass to docker compose")
 	dockerCmd.PersistentFlags().BoolVarP(&dockerFollow, "follow", "f", true, "Follow operation logs (default: true)")
+	dockerCmd.PersistentFlags().DurationVar(&dockerTimeout, "timeout", time.Hour, "Maximum time to follow an operation")
 
 	dockerCmd.AddCommand(
 		&cobra.Command{
@@ -172,6 +175,9 @@ func runDockerOperation(command string) func(*cobra.Command, []string) error {
 		if err != nil {
 			return err
 		}
+		if dockerFollow && dockerTimeout <= 0 {
+			return fmt.Errorf("--timeout must be positive")
+		}
 
 		operationID, err := startOperation(client.New(cfg), serverID, getStackName(cmd), berth.OperationRequest{
 			Command:  command,
@@ -188,7 +194,7 @@ func runDockerOperation(command string) func(*cobra.Command, []string) error {
 			return nil
 		}
 
-		return streamOperation(cfg, getServerIDStr(cmd), getStackName(cmd), operationID)
+		return streamOperation(cfg, getServerIDStr(cmd), getStackName(cmd), operationID, dockerTimeout)
 	}
 }
 
@@ -211,27 +217,38 @@ func startOperation(c *client.Client, serverID int32, stackName string, req bert
 	return resp.Data.OperationId, nil
 }
 
-func streamOperation(cfg *config.Config, serverID, stackName, operationID string) error {
+type OperationExitError struct {
+	Code        int
+	OperationID string
+}
+
+func (e *OperationExitError) Error() string {
+	return fmt.Sprintf("operation %s failed (exit code: %d)", e.OperationID, e.Code)
+}
+
+func streamOperation(cfg *config.Config, serverID, stackName, operationID string, timeout time.Duration) error {
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
 	wsPath := fmt.Sprintf("/ws/api/servers/%s/stacks/%s/operations/%s", serverID, stackName, operationID)
-	conn, err := ws.Dial(cfg, wsPath)
+	conn, err := ws.Dial(ctx, cfg, wsPath)
 	if err != nil {
-		return fmt.Errorf("failed to connect to WebSocket: %w", err)
+		return fmt.Errorf("operation %s has no confirmed result; it may continue on the server: %w", operationID, err)
 	}
 	defer conn.Close()
+	deadline, _ := ctx.Deadline()
+	if err := conn.SetReadDeadline(deadline); err != nil {
+		return fmt.Errorf("operation %s: failed to set stream deadline: %w", operationID, err)
+	}
 
 	for {
 		_, data, err := conn.ReadMessage()
 		if err != nil {
-			if websocket.IsCloseError(err, websocket.CloseNormalClosure, websocket.CloseGoingAway) {
-				return nil
-			}
-			return fmt.Errorf("WebSocket read error: %w", err)
+			return fmt.Errorf("operation %s has no confirmed result; it may continue on the server: %w", operationID, err)
 		}
 
 		var msg berth.StreamMessage
 		if err := json.Unmarshal(data, &msg); err != nil {
-			fmt.Fprintf(os.Stderr, "Error parsing message: %v\n", err)
-			continue
+			return fmt.Errorf("operation %s sent an invalid message: %w", operationID, err)
 		}
 
 		switch msg.Type {
@@ -253,22 +270,25 @@ func streamOperation(cfg *config.Config, serverID, stackName, operationID string
 				fmt.Printf("[%s] %s\n", msg.Timestamp.Format("15:04:05"), *msg.Data)
 			}
 		case "complete":
-			exitCode := 0
-			if msg.ExitCode.IsSet() && msg.ExitCode.Get() != nil {
-				exitCode = int(*msg.ExitCode.Get())
+			success, exitCode := msg.Success.Get(), msg.ExitCode.Get()
+			if success == nil || exitCode == nil {
+				return fmt.Errorf("operation %s completed without a usable result", operationID)
 			}
-			success := msg.Success.IsSet() && msg.Success.Get() != nil && *msg.Success.Get()
-			if success {
-				fmt.Printf("\nOperation completed successfully (exit code: %d)\n", exitCode)
-			} else {
-				fmt.Printf("\nOperation failed (exit code: %d)\n", exitCode)
+			if *success && *exitCode == 0 {
+				fmt.Printf("\nOperation completed successfully (exit code: 0)\n")
+				return nil
 			}
-			os.Exit(exitCode)
+			if !*success && *exitCode > 0 && *exitCode <= 255 {
+				return &OperationExitError{Code: int(*exitCode), OperationID: operationID}
+			}
+			return fmt.Errorf("operation %s reported success=%t with exit code %d", operationID, *success, *exitCode)
 		case "error":
 			if msg.Data != nil {
-				fmt.Fprintf(os.Stderr, "Error: %s\n", *msg.Data)
+				return fmt.Errorf("operation %s reported an error: %s", operationID, *msg.Data)
 			}
-			os.Exit(1)
+			return fmt.Errorf("operation %s reported an error", operationID)
+		default:
+			return fmt.Errorf("operation %s sent unknown message type %q", operationID, msg.Type)
 		}
 	}
 }

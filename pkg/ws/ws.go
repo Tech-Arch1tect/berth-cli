@@ -1,6 +1,7 @@
 package ws
 
 import (
+	"context"
 	"crypto/tls"
 	"fmt"
 	"net/http"
@@ -10,7 +11,7 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-func Dial(cfg *config.Config, path string) (*websocket.Conn, error) {
+func Dial(ctx context.Context, cfg *config.Config, path string) (*websocket.Conn, error) {
 	u, err := url.Parse(cfg.Server)
 	if err != nil {
 		return nil, fmt.Errorf("invalid server URL: %w", err)
@@ -25,15 +26,15 @@ func Dial(cfg *config.Config, path string) (*websocket.Conn, error) {
 
 	dialer := websocket.DefaultDialer
 	if cfg.Insecure {
-		dialer = &websocket.Dialer{
-			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-		}
+		insecureDialer := *dialer
+		insecureDialer.TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
+		dialer = &insecureDialer
 	}
 
 	headers := http.Header{}
 	headers.Set("Authorization", "Bearer "+cfg.APIKey)
 
-	conn, _, err := dialer.Dial(u.String(), headers)
+	conn, _, err := dialer.DialContext(ctx, u.String(), headers)
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to WebSocket: %w", err)
 	}
