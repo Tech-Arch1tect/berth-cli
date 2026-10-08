@@ -34,8 +34,12 @@ func Dial(ctx context.Context, cfg *config.Config, path string) (*websocket.Conn
 	headers := http.Header{}
 	headers.Set("Authorization", "Bearer "+cfg.APIKey)
 
-	conn, _, err := dialer.DialContext(ctx, u.String(), headers)
+	conn, response, err := dialer.DialContext(ctx, u.String(), headers)
 	if err != nil {
+		if response != nil {
+			_ = response.Body.Close()
+			return nil, fmt.Errorf("failed to connect to WebSocket (%s): %w", response.Status, err)
+		}
 		return nil, fmt.Errorf("failed to connect to WebSocket: %w", err)
 	}
 
