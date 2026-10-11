@@ -29,8 +29,9 @@ Examples:
 
   # Skip confirmation
   berth-cli compose create-volume -s 1 -n my-stack cache --yes`,
-	Args: cobra.ExactArgs(1),
-	RunE: runComposeCreateVolume,
+	Args:        cobra.ExactArgs(1),
+	RunE:        runComposeCreateVolume,
+	Annotations: mcpMetadata("compose-write", "volume-name"),
 }
 
 var composeDeleteVolumeCmd = &cobra.Command{
@@ -46,8 +47,9 @@ Examples:
 
   # Skip confirmation
   berth-cli compose delete-volume -s 1 -n my-stack unused-vol --yes`,
-	Args: cobra.ExactArgs(1),
-	RunE: runComposeDeleteVolume,
+	Args:        cobra.ExactArgs(1),
+	RunE:        runComposeDeleteVolume,
+	Annotations: mcpMetadata("compose-write", "volume-name"),
 }
 
 func init() {

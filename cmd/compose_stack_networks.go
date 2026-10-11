@@ -28,8 +28,9 @@ Examples:
 
   # Skip confirmation
   berth-cli compose create-network -s 1 -n my-stack internal --yes`,
-	Args: cobra.ExactArgs(1),
-	RunE: runComposeCreateNetwork,
+	Args:        cobra.ExactArgs(1),
+	RunE:        runComposeCreateNetwork,
+	Annotations: mcpMetadata("compose-write", "network-name"),
 }
 
 var composeDeleteNetworkCmd = &cobra.Command{
@@ -45,8 +46,9 @@ Examples:
 
   # Skip confirmation
   berth-cli compose delete-network -s 1 -n my-stack unused-net --yes`,
-	Args: cobra.ExactArgs(1),
-	RunE: runComposeDeleteNetwork,
+	Args:        cobra.ExactArgs(1),
+	RunE:        runComposeDeleteNetwork,
+	Annotations: mcpMetadata("compose-write", "network-name"),
 }
 
 func init() {

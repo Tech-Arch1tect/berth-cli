@@ -19,8 +19,9 @@ Examples:
 
   # Skip confirmation
   berth-cli compose add-network -s 1 -n my-stack nginx backend --yes`,
-	Args: cobra.ExactArgs(2),
-	RunE: runComposeAddNetwork,
+	Args:        cobra.ExactArgs(2),
+	RunE:        runComposeAddNetwork,
+	Annotations: mcpMetadata("compose-write", "service", "network-name"),
 }
 
 var composeRemoveNetworkCmd = &cobra.Command{
@@ -34,8 +35,9 @@ Examples:
 
   # Skip confirmation
   berth-cli compose remove-network -s 1 -n my-stack nginx frontend --yes`,
-	Args: cobra.ExactArgs(2),
-	RunE: runComposeRemoveNetwork,
+	Args:        cobra.ExactArgs(2),
+	RunE:        runComposeRemoveNetwork,
+	Annotations: mcpMetadata("compose-write", "service", "network-name"),
 }
 
 func init() {

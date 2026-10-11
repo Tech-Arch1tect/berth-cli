@@ -27,8 +27,9 @@ Examples:
 
   # Skip confirmation
   berth-cli compose add-port -s 1 -n my-stack nginx 8080:80 --yes`,
-	Args: cobra.ExactArgs(2),
-	RunE: runComposeAddPort,
+	Args:        cobra.ExactArgs(2),
+	RunE:        runComposeAddPort,
+	Annotations: mcpMetadata("compose-write", "service", "port-mapping"),
 }
 
 var composeRemovePortCmd = &cobra.Command{
@@ -44,8 +45,9 @@ Examples:
 
   # Skip confirmation
   berth-cli compose remove-port -s 1 -n my-stack nginx 8080:80 --yes`,
-	Args: cobra.ExactArgs(2),
-	RunE: runComposeRemovePort,
+	Args:        cobra.ExactArgs(2),
+	RunE:        runComposeRemovePort,
+	Annotations: mcpMetadata("compose-write", "service", "port-mapping"),
 }
 
 func init() {

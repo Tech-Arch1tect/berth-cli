@@ -29,8 +29,9 @@ Examples:
 
   # Skip confirmation
   berth-cli compose add-volume -s 1 -n my-stack nginx ./logs:/var/log/nginx --yes`,
-	Args: cobra.ExactArgs(2),
-	RunE: runComposeAddVolume,
+	Args:        cobra.ExactArgs(2),
+	RunE:        runComposeAddVolume,
+	Annotations: mcpMetadata("compose-write", "service", "volume-mount"),
 }
 
 var composeRemoveVolumeCmd = &cobra.Command{
@@ -44,8 +45,9 @@ Examples:
 
   # Skip confirmation
   berth-cli compose remove-volume -s 1 -n my-stack nginx /var/log/nginx --yes`,
-	Args: cobra.ExactArgs(2),
-	RunE: runComposeRemoveVolume,
+	Args:        cobra.ExactArgs(2),
+	RunE:        runComposeRemoveVolume,
+	Annotations: mcpMetadata("compose-write", "service", "target-path"),
 }
 
 func init() {

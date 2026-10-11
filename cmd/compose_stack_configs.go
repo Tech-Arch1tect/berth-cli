@@ -25,8 +25,9 @@ Examples:
 
   # Skip confirmation
   berth-cli compose create-config -s 1 -n my-stack settings --file ./config.json --yes`,
-	Args: cobra.ExactArgs(1),
-	RunE: runComposeCreateConfig,
+	Args:        cobra.ExactArgs(1),
+	RunE:        runComposeCreateConfig,
+	Annotations: mcpMetadata("compose-write", "config-name"),
 }
 
 var composeDeleteConfigCmd = &cobra.Command{
@@ -40,8 +41,9 @@ Examples:
 
   # Skip confirmation
   berth-cli compose delete-config -s 1 -n my-stack unused-config --yes`,
-	Args: cobra.ExactArgs(1),
-	RunE: runComposeDeleteConfig,
+	Args:        cobra.ExactArgs(1),
+	RunE:        runComposeDeleteConfig,
+	Annotations: mcpMetadata("compose-write", "config-name"),
 }
 
 func init() {

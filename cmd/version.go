@@ -9,9 +9,10 @@ import (
 var Version = "dev"
 
 var versionCmd = &cobra.Command{
-	Use:   "version",
-	Short: "Print the version number",
-	Long:  `Print the berth-cli version number.`,
+	Use:         "version",
+	Short:       "Print the version number",
+	Long:        `Print the berth-cli version number.`,
+	Annotations: mcpTransportMetadata(),
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Printf("berth-cli version %s\n", Version)
 	},

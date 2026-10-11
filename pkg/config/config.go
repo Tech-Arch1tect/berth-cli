@@ -55,7 +55,7 @@ func loadFromFile() (*Config, string, error) {
 	return &Config{}, "", nil
 }
 
-func loadFromEnv(cfg *Config) {
+func loadFromEnv(cfg *Config, strictTLS bool) error {
 	if server := os.Getenv("BERTH_SERVER_URL"); server != "" {
 		cfg.Server = server
 	}
@@ -63,8 +63,19 @@ func loadFromEnv(cfg *Config) {
 		cfg.APIKey = apiKey
 	}
 	if insecure := os.Getenv("BERTH_INSECURE"); insecure != "" {
-		cfg.Insecure = insecure == "true" || insecure == "1" || insecure == "yes"
+		switch insecure {
+		case "true", "1", "yes":
+			cfg.Insecure = true
+		case "false", "0", "no":
+			cfg.Insecure = false
+		default:
+			if strictTLS {
+				return fmt.Errorf("BERTH_INSECURE must be true, false, 1, 0, yes or no")
+			}
+			cfg.Insecure = false
+		}
 	}
+	return nil
 }
 
 func applyFlags(cfg *Config, server, apiKey string, insecure bool, insecureSet bool, verbose bool) {
@@ -90,7 +101,9 @@ func Load(flagServer, flagAPIKey string, flagInsecure bool, flagInsecureSet bool
 		return nil, err
 	}
 
-	loadFromEnv(cfg)
+	if err := loadFromEnv(cfg, false); err != nil {
+		return nil, err
+	}
 
 	applyFlags(cfg, flagServer, flagAPIKey, flagInsecure, flagInsecureSet, flagVerbose)
 
@@ -103,5 +116,21 @@ func Load(flagServer, flagAPIKey string, flagInsecure bool, flagInsecureSet bool
 		return nil, fmt.Errorf("API key is required (use --api-key, BERTH_API_KEY, or config file)")
 	}
 
+	return cfg, nil
+}
+
+func LoadMCP() (*Config, error) {
+	cfg := &Config{}
+	envErr := loadFromEnv(cfg, true)
+	cfg.Server = normalizeURL(cfg.Server)
+	if strings.TrimSpace(cfg.Server) == "" {
+		return nil, fmt.Errorf("BERTH_SERVER_URL is required for MCP")
+	}
+	if strings.TrimSpace(cfg.APIKey) == "" {
+		return nil, fmt.Errorf("BERTH_API_KEY is required for MCP")
+	}
+	if envErr != nil {
+		return nil, envErr
+	}
 	return cfg, nil
 }

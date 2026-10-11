@@ -32,8 +32,9 @@ Examples:
   berth-cli compose get -s 1 -n my-stack nginx --field image
   berth-cli compose get -s 1 -n my-stack nginx --field environment
   berth-cli compose get -s 1 -n my-stack nginx --field ports`,
-	Args: cobra.RangeArgs(0, 1),
-	RunE: runComposeGet,
+	Args:        cobra.RangeArgs(0, 1),
+	RunE:        runComposeGet,
+	Annotations: mcpMetadata("read", "service?"),
 }
 
 func init() {

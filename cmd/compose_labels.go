@@ -19,8 +19,9 @@ Examples:
 
   # Set deployment metadata
   berth-cli compose set-label -s 1 -n my-stack nginx deploy.commit=abc123 --yes`,
-	Args: cobra.ExactArgs(2),
-	RunE: runComposeSetLabel,
+	Args:        cobra.ExactArgs(2),
+	RunE:        runComposeSetLabel,
+	Annotations: mcpMetadata("compose-write", "service", "key-value"),
 }
 
 var composeUnsetLabelCmd = &cobra.Command{
@@ -34,8 +35,9 @@ Examples:
 
   # Remove with confirmation skip
   berth-cli compose unset-label -s 1 -n my-stack nginx old-label --yes`,
-	Args: cobra.ExactArgs(2),
-	RunE: runComposeUnsetLabel,
+	Args:        cobra.ExactArgs(2),
+	RunE:        runComposeUnsetLabel,
+	Annotations: mcpMetadata("compose-write", "service", "key"),
 }
 
 func init() {

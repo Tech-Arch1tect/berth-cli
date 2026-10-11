@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"os"
+
 	"github.com/Tech-Arch1tect/berth-cli/pkg/client"
 	"github.com/Tech-Arch1tect/berth-cli/pkg/config"
 	"github.com/Tech-Arch1tect/berth-cli/pkg/output"
@@ -49,6 +51,9 @@ func init() {
 }
 
 func loadConfig(cmd *cobra.Command) (*config.Config, error) {
+	if os.Getenv("BERTH_MCP_CHILD") == "1" {
+		return config.LoadMCP()
+	}
 	insecureSet := cmd.Flags().Changed("insecure")
 	return config.Load(flagServer, flagAPIKey, flagInsecure, insecureSet, flagVerbose)
 }

@@ -18,8 +18,9 @@ Examples:
 
   # Skip confirmation and apply directly
   berth-cli compose set-image -s 1 -n my-stack nginx nginx:1.25 --yes`,
-	Args: cobra.ExactArgs(2),
-	RunE: runComposeSetImage,
+	Args:        cobra.ExactArgs(2),
+	RunE:        runComposeSetImage,
+	Annotations: mcpMetadata("compose-write", "service", "image"),
 }
 
 func init() {

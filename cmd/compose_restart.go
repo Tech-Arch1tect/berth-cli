@@ -23,8 +23,9 @@ Examples:
 
   # Set restart policy to on-failure
   berth-cli compose set-restart -s 1 -n my-stack nginx on-failure --yes`,
-	Args: cobra.ExactArgs(2),
-	RunE: runComposeSetRestart,
+	Args:        cobra.ExactArgs(2),
+	RunE:        runComposeSetRestart,
+	Annotations: mcpMetadata("compose-write", "service", "policy"),
 }
 
 func init() {

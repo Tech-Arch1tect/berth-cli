@@ -23,8 +23,9 @@ Examples:
 
   # Skip confirmation
   berth-cli compose add-service -s 1 -n my-stack api myapp:latest --yes`,
-	Args: cobra.ExactArgs(2),
-	RunE: runComposeAddService,
+	Args:        cobra.ExactArgs(2),
+	RunE:        runComposeAddService,
+	Annotations: mcpMetadata("compose-write", "service-name", "image"),
 }
 
 var composeRemoveServiceCmd = &cobra.Command{
@@ -40,8 +41,9 @@ Examples:
 
   # Skip confirmation
   berth-cli compose remove-service -s 1 -n my-stack old-service --yes`,
-	Args: cobra.ExactArgs(1),
-	RunE: runComposeRemoveService,
+	Args:        cobra.ExactArgs(1),
+	RunE:        runComposeRemoveService,
+	Annotations: mcpMetadata("compose-write", "service-name"),
 }
 
 var composeRenameServiceCmd = &cobra.Command{
@@ -57,8 +59,9 @@ Examples:
 
   # Skip confirmation
   berth-cli compose rename-service -s 1 -n my-stack web frontend --yes`,
-	Args: cobra.ExactArgs(2),
-	RunE: runComposeRenameService,
+	Args:        cobra.ExactArgs(2),
+	RunE:        runComposeRenameService,
+	Annotations: mcpMetadata("compose-write", "old-name", "new-name"),
 }
 
 func init() {

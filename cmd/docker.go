@@ -74,7 +74,8 @@ Examples:
 
   # Start without following logs
   berth-cli docker up -s 1 -n my-stack --follow=false`,
-			RunE: runDockerOperation("up"),
+			RunE:        runDockerOperation("up"),
+			Annotations: mcpMetadata("write"),
 		},
 		&cobra.Command{
 			Use:   "down",
@@ -92,7 +93,8 @@ Examples:
 
   # Remove including volumes
   berth-cli docker down -s 1 -n my-stack --options "--volumes"`,
-			RunE: runDockerOperation("down"),
+			RunE:        runDockerOperation("down"),
+			Annotations: mcpMetadata("write"),
 		},
 		&cobra.Command{
 			Use:   "start",
@@ -108,7 +110,8 @@ Examples:
 
   # Start a specific service
   berth-cli docker start -s 1 -n my-stack --services web`,
-			RunE: runDockerOperation("start"),
+			RunE:        runDockerOperation("start"),
+			Annotations: mcpMetadata("write"),
 		},
 		&cobra.Command{
 			Use:   "stop",
@@ -127,7 +130,8 @@ Examples:
 
   # Stop with a custom timeout
   berth-cli docker stop -s 1 -n my-stack --options "-t","30"`,
-			RunE: runDockerOperation("stop"),
+			RunE:        runDockerOperation("stop"),
+			Annotations: mcpMetadata("write"),
 		},
 		&cobra.Command{
 			Use:   "restart",
@@ -143,7 +147,8 @@ Examples:
 
   # Restart without following logs
   berth-cli docker restart -s 1 -n my-stack --follow=false`,
-			RunE: runDockerOperation("restart"),
+			RunE:        runDockerOperation("restart"),
+			Annotations: mcpMetadata("write"),
 		},
 		&cobra.Command{
 			Use:   "pull",
@@ -159,7 +164,8 @@ Examples:
 
   # Pull without following logs
   berth-cli docker pull -s 1 -n my-stack --follow=false`,
-			RunE: runDockerOperation("pull"),
+			RunE:        runDockerOperation("pull"),
+			Annotations: mcpMetadata("write"),
 		},
 	)
 }

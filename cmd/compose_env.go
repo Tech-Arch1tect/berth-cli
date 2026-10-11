@@ -19,8 +19,9 @@ Examples:
 
   # Set with confirmation skip
   berth-cli compose set-env -s 1 -n my-stack nginx API_KEY=secret --yes`,
-	Args: cobra.ExactArgs(2),
-	RunE: runComposeSetEnv,
+	Args:        cobra.ExactArgs(2),
+	RunE:        runComposeSetEnv,
+	Annotations: mcpMetadata("compose-write", "service", "key-value"),
 }
 
 var composeUnsetEnvCmd = &cobra.Command{
@@ -34,8 +35,9 @@ Examples:
 
   # Remove with confirmation skip
   berth-cli compose unset-env -s 1 -n my-stack nginx DEBUG --yes`,
-	Args: cobra.ExactArgs(2),
-	RunE: runComposeUnsetEnv,
+	Args:        cobra.ExactArgs(2),
+	RunE:        runComposeUnsetEnv,
+	Annotations: mcpMetadata("compose-write", "service", "key"),
 }
 
 func init() {

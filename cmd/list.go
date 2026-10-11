@@ -15,17 +15,19 @@ var listCmd = &cobra.Command{
 }
 
 var listServersCmd = &cobra.Command{
-	Use:   "servers",
-	Short: "List all servers",
-	Long:  `List all accessible Berth servers.`,
-	RunE:  runListServers,
+	Use:         "servers",
+	Short:       "List all servers",
+	Long:        `List all accessible Berth servers.`,
+	RunE:        runListServers,
+	Annotations: mcpMetadata("read"),
 }
 
 var listStacksCmd = &cobra.Command{
-	Use:   "stacks",
-	Short: "List stacks on a server",
-	Long:  `List all stacks on a specific server.`,
-	RunE:  runListStacks,
+	Use:         "stacks",
+	Short:       "List stacks on a server",
+	Long:        `List all stacks on a specific server.`,
+	RunE:        runListStacks,
+	Annotations: map[string]string{"mcp-risk": "read", "mcp-positionals": "", "mcp-required-flags": "server-id"},
 }
 
 func init() {

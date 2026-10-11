@@ -39,7 +39,8 @@ Examples:
 		}
 		return nil
 	},
-	RunE: runExec,
+	RunE:        runExec,
+	Annotations: mcpMetadata("exec", "service", "command..."),
 }
 
 func init() {

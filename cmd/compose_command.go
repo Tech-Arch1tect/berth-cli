@@ -22,8 +22,9 @@ Examples:
 
   # Skip confirmation (flags before --)
   berth-cli compose set-command --yes -s 1 -n my-stack app -- python app.py`,
-	Args: cobra.MinimumNArgs(1),
-	RunE: runComposeSetCommand,
+	Args:        cobra.MinimumNArgs(1),
+	RunE:        runComposeSetCommand,
+	Annotations: mcpMetadata("compose-write", "service", "command..."),
 }
 
 var composeSetEntrypointCmd = &cobra.Command{
@@ -42,8 +43,9 @@ Examples:
 
   # Skip confirmation (flags before --)
   berth-cli compose set-entrypoint --yes -s 1 -n my-stack app -- /entrypoint.sh`,
-	Args: cobra.MinimumNArgs(1),
-	RunE: runComposeSetEntrypoint,
+	Args:        cobra.MinimumNArgs(1),
+	RunE:        runComposeSetEntrypoint,
+	Annotations: mcpMetadata("compose-write", "service", "entrypoint..."),
 }
 
 func init() {

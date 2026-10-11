@@ -25,8 +25,9 @@ Examples:
 
   # Skip confirmation
   berth-cli compose create-secret -s 1 -n my-stack api_key --file ./secret.txt --yes`,
-	Args: cobra.ExactArgs(1),
-	RunE: runComposeCreateSecret,
+	Args:        cobra.ExactArgs(1),
+	RunE:        runComposeCreateSecret,
+	Annotations: mcpMetadata("compose-write", "secret-name"),
 }
 
 var composeDeleteSecretCmd = &cobra.Command{
@@ -40,8 +41,9 @@ Examples:
 
   # Skip confirmation
   berth-cli compose delete-secret -s 1 -n my-stack unused-secret --yes`,
-	Args: cobra.ExactArgs(1),
-	RunE: runComposeDeleteSecret,
+	Args:        cobra.ExactArgs(1),
+	RunE:        runComposeDeleteSecret,
+	Annotations: mcpMetadata("compose-write", "secret-name"),
 }
 
 func init() {
