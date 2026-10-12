@@ -279,7 +279,9 @@ func mcpFlagSchema(flag *pflag.Flag) (map[string]any, error) {
 	switch flag.Value.Type() {
 	case "string", "duration":
 		property["type"] = "string"
-		property["default"] = flag.DefValue
+		if flag.DefValue != "" {
+			property["default"] = flag.DefValue
+		}
 	case "bool":
 		property["type"] = "boolean"
 		value, err := strconv.ParseBool(flag.DefValue)
