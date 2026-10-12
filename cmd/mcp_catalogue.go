@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/csv"
 	"fmt"
+	"math"
 	"regexp"
 	"strconv"
 	"strings"
@@ -289,6 +290,15 @@ func mcpFlagSchema(flag *pflag.Flag) (map[string]any, error) {
 			return nil, fmt.Errorf("invalid boolean flag default: %s", flag.Name)
 		}
 		property["default"] = value
+	case "int32":
+		property["type"] = "integer"
+		property["minimum"] = int64(math.MinInt32)
+		property["maximum"] = int64(math.MaxInt32)
+		value, err := strconv.ParseInt(flag.DefValue, 10, 32)
+		if err != nil {
+			return nil, fmt.Errorf("invalid int32 flag default: %s", flag.Name)
+		}
+		property["default"] = value
 	case "stringArray", "stringSlice":
 		property["type"] = "array"
 		property["items"] = map[string]any{"type": "string"}
@@ -362,6 +372,12 @@ func (c mcpCommand) arguments(input map[string]any) ([]string, error) {
 				return nil, fmt.Errorf("%s must be a boolean", flag.Name)
 			}
 			argv = append(argv, prefix+strconv.FormatBool(boolean))
+		case "int32":
+			number, ok := value.(float64)
+			if !ok || math.IsNaN(number) || math.IsInf(number, 0) || math.Trunc(number) != number || number < math.MinInt32 || number > math.MaxInt32 {
+				return nil, fmt.Errorf("%s must be an integer within the int32 range", flag.Name)
+			}
+			argv = append(argv, prefix+strconv.FormatFloat(number, 'f', 0, 64))
 		case "stringArray", "stringSlice":
 			values, err := mcpStrings(value)
 			if err != nil {
