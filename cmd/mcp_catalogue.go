@@ -19,6 +19,10 @@ type mcpPositional struct {
 	required bool
 	array    bool
 }
+type mcpFlagGroup struct {
+	names    []string
+	required bool
+}
 
 type mcpCommand struct {
 	tool        *mcp.Tool
@@ -28,6 +32,7 @@ type mcpCommand struct {
 	required    []string
 	path        []string
 	exec        bool
+	groups      []mcpFlagGroup
 }
 
 var mcpPropertyName = regexp.MustCompile(`^[a-z][a-z0-9-]*$`)
@@ -181,7 +186,7 @@ func describeMCPCommand(command *cobra.Command, path []string) (mcpCommand, erro
 			flagError = err
 			return
 		}
-		if len(flag.Annotations[cobra.BashCompOneRequiredFlag]) > 0 || mcpRequiredFlag(command, flag.Name) {
+		if len(flag.Annotations[cobra.BashCompOneRequiredFlag]) > 0 {
 			delete(property, "default")
 			entry.required = append(entry.required, flag.Name)
 		}
@@ -191,11 +196,6 @@ func describeMCPCommand(command *cobra.Command, path []string) (mcpCommand, erro
 	if flagError != nil {
 		return entry, flagError
 	}
-	for _, name := range strings.Fields(command.Annotations["mcp-required-flags"]) {
-		if _, exists := properties[name]; !exists || flags.Lookup(name) == nil || mcpExcludedFlag(flags.Lookup(name)) {
-			return entry, fmt.Errorf("required flag %q is unavailable", name)
-		}
-	}
 	if entry.preview && (len(path) < 2 || path[0] != "compose" || flags.Lookup("yes") == nil || flags.Lookup("yes").Value.Type() != "bool") {
 		return entry, fmt.Errorf("Compose mutation requires a boolean yes flag")
 	}
@@ -203,11 +203,40 @@ func describeMCPCommand(command *cobra.Command, path []string) (mcpCommand, erro
 		return entry, fmt.Errorf("missing command path or description")
 	}
 	destructive := risk != "read"
+	schema := map[string]any{"type": "object", "properties": properties, "required": entry.required, "additionalProperties": false}
+	entry.groups = mcpFlagGroups(entry.flags)
+	var constraints []any
+	for _, group := range entry.groups {
+		var choices []any
+		for index, name := range group.names {
+			property, ok := properties[name].(map[string]any)
+			if !ok {
+				return entry, fmt.Errorf("flag group member %q is unavailable", name)
+			}
+			delete(property, "default")
+			if group.required {
+				if property["type"] == "boolean" {
+					property["const"] = true
+				}
+				choices = append(choices, map[string]any{"required": []string{name}})
+			} else {
+				for _, other := range group.names[index+1:] {
+					constraints = append(constraints, map[string]any{"not": map[string]any{"required": []string{name, other}}})
+				}
+			}
+		}
+		if group.required {
+			constraints = append(constraints, map[string]any{"anyOf": choices})
+		}
+	}
+	if len(constraints) != 0 {
+		schema["allOf"] = constraints
+	}
 	openWorld := true
 	entry.tool = &mcp.Tool{
 		Name:        "berth_" + strings.ReplaceAll(strings.Join(path, "_"), "-", "_"),
 		Description: command.Long,
-		InputSchema: map[string]any{"type": "object", "properties": properties, "required": entry.required, "additionalProperties": false},
+		InputSchema: schema,
 		Annotations: &mcp.ToolAnnotations{Title: command.Short, ReadOnlyHint: risk == "read", DestructiveHint: &destructive, OpenWorldHint: &openWorld},
 	}
 	if entry.tool.Description == "" {
@@ -216,13 +245,25 @@ func describeMCPCommand(command *cobra.Command, path []string) (mcpCommand, erro
 	return entry, nil
 }
 
-func mcpRequiredFlag(command *cobra.Command, name string) bool {
-	for _, required := range strings.Fields(command.Annotations["mcp-required-flags"]) {
-		if required == name {
-			return true
+func mcpFlagGroups(flags []*pflag.Flag) []mcpFlagGroup {
+	seen := make(map[string]bool)
+	var groups []mcpFlagGroup
+	for _, flag := range flags {
+		for _, annotation := range []string{"cobra_annotation_one_required", "cobra_annotation_mutually_exclusive"} {
+			for _, text := range flag.Annotations[annotation] {
+				key := annotation + ":" + text
+				if seen[key] {
+					continue
+				}
+				seen[key] = true
+				groups = append(groups, mcpFlagGroup{
+					names:    strings.Fields(text),
+					required: annotation == "cobra_annotation_one_required",
+				})
+			}
 		}
 	}
-	return false
+	return groups
 }
 
 func mcpExcludedFlag(flag *pflag.Flag) bool {
@@ -271,6 +312,20 @@ func (c mcpCommand) arguments(input map[string]any) ([]string, error) {
 	for _, name := range c.required {
 		if _, exists := input[name]; !exists {
 			return nil, fmt.Errorf("missing required argument %q", name)
+		}
+	}
+	for _, group := range c.groups {
+		provided := 0
+		for _, name := range group.names {
+			if value, exists := input[name]; exists && (!group.required || value != false) {
+				provided++
+			}
+		}
+		if group.required && provided == 0 {
+			return nil, fmt.Errorf("one of %s is required", strings.Join(group.names, ", "))
+		}
+		if !group.required && provided > 1 {
+			return nil, fmt.Errorf("%s are mutually exclusive", strings.Join(group.names, ", "))
 		}
 	}
 	argv := append([]string(nil), c.path...)
