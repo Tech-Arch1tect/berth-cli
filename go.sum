@@ -25,8 +25,8 @@ github.com/spf13/cobra v1.10.2/go.mod h1:7C1pvHqHw5A4vrJfjNwvOdzYu0Gml16OCs2GRiT
 github.com/spf13/pflag v1.0.9/go.mod h1:McXfInJRrz4CZXVZOBLb0bTZqETkiAhM9Iw0y3An2Bg=
 github.com/spf13/pflag v1.0.10 h1:4EBh2KAYBwaONj6b2Ye1GiHfwjqyROoF4RwYO+vPwFk=
 github.com/spf13/pflag v1.0.10/go.mod h1:McXfInJRrz4CZXVZOBLb0bTZqETkiAhM9Iw0y3An2Bg=
-github.com/tech-arch1tect/berth-go-api-client v0.5.4 h1:VC1Uz+y8NGhBy+oAyNVSfOj4kXY9bxYiCp6zLHPS1Qw=
-github.com/tech-arch1tect/berth-go-api-client v0.5.4/go.mod h1:0Cl/x9g9u5o48GMDgfCyvsPTTbFHCM7ox8QZoXWALSk=
+github.com/tech-arch1tect/berth-go-api-client v0.5.5 h1:K3+atSMK1USMpsbCiQUhG4f+SeCLYaDOgVbvQeIj69Y=
+github.com/tech-arch1tect/berth-go-api-client v0.5.5/go.mod h1:0Cl/x9g9u5o48GMDgfCyvsPTTbFHCM7ox8QZoXWALSk=
 github.com/yosida95/uritemplate/v3 v3.0.2 h1:Ed3Oyj9yrmi9087+NczuL5BwkIc4wvTb5zIM+UJPGz4=
 github.com/yosida95/uritemplate/v3 v3.0.2/go.mod h1:ILOh0sOhIJR3+L/8afwt/kE++YT040gmv5BQTMR2HP4=
 go.yaml.in/yaml/v3 v3.0.4/go.mod h1:DhzuOOF2ATzADvBadXxruRBLzYTpT36CKvDb3+aBEFg=
